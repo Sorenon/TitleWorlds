@@ -53,6 +53,7 @@ import java.net.Proxy;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -170,11 +171,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             TitleWorldsMod.state.isTitleWorld = false;
             TitleWorldsMod.state.pause = false;
         } else if (this.closingLevel && this.running) {
-            try {
-                this.loadTitleWorld(TitleWorldsMod.getRandomWorld(), RegistryAccess.builtin(), Minecraft::loadDataPacks, Minecraft::loadWorldData, false);
-            } catch (ExecutionException | InterruptedException | LevelStorageException e) {
-                e.printStackTrace();
-            }
+            tryLoadTitleWorld();
         }
     }
 
@@ -201,10 +198,25 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
     @Inject(method = "<init>", at = @At("RETURN"))
     void init(GameConfig gameConfig, CallbackInfo ci) {
+        tryLoadTitleWorld();
+    }
+
+    @Unique
+    private static final Random random = new Random();
+
+    @Unique
+    public boolean tryLoadTitleWorld() {
         try {
-            this.loadTitleWorld(TitleWorldsMod.getRandomWorld(), RegistryAccess.builtin(), Minecraft::loadDataPacks, Minecraft::loadWorldData, false);
+            List<LevelSummary> list = TitleWorldsMod.levelSource.getLevelList();
+            if (list.isEmpty()) {
+                TitleWorldsMod.LOGGER.info("TitleWorlds folder is empty");
+                return false;
+            }
+            this.loadTitleWorld(list.get(random.nextInt(list.size())).getLevelId(), RegistryAccess.builtin(), Minecraft::loadDataPacks, Minecraft::loadWorldData, false);
+            return true;
         } catch (ExecutionException | InterruptedException | LevelStorageException e) {
-            e.printStackTrace();
+            TitleWorldsMod.LOGGER.error("Exception when loading title world", e);
+            return false;
         }
     }
 
@@ -290,20 +302,29 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
 
-        var joinServerFuture = CompletableFuture.supplyAsync(this::joinSingleplayerServer);
+        if (true) {
+            var joinServerFuture = CompletableFuture.supplyAsync(this::joinSingleplayerServer);
 
-        activeLoadingFuture = joinServerFuture;
+            activeLoadingFuture = joinServerFuture;
 
-        TitleWorldsMod.LOGGER.info("Four");
-        while (!joinServerFuture.isDone()) {
-            this.runAllTasks();
-            this.runTick(false);
-            if (!TitleWorldsMod.state.isTitleWorld) {
-                return;
+            TitleWorldsMod.LOGGER.info("Four");
+            while (!joinServerFuture.isDone()) {
+                this.runAllTasks();
+                this.runTick(false);
+                if (!TitleWorldsMod.state.isTitleWorld) {
+                    return;
+                }
             }
+            activeLoadingFuture = null;
+            this.pendingConnection = joinServerFuture.get();
+
+        } else {
+            //This being async can rarely cause crashes
+            activeLoadingFuture = null;
+            this.pendingConnection = this.joinSingleplayerServer();
         }
-        activeLoadingFuture = null;
-        this.pendingConnection = joinServerFuture.get();
+
+
         TitleWorldsMod.LOGGER.info("Five");
     }
 
@@ -367,13 +388,40 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
     @Unique
     private Connection joinSingleplayerServer() {
+        long start = System.currentTimeMillis();
+
         SocketAddress minecraftSessionService = this.singleplayerServer.getConnection().startMemoryChannel();
+
+        long channel = System.currentTimeMillis();
+
         Connection gameProfileRepository = Connection.connectToLocalServer(minecraftSessionService);
+
+        long connect = System.currentTimeMillis();
+
         gameProfileRepository.setListener(new ClientHandshakePacketListenerImpl(gameProfileRepository, (Minecraft) (Object) this, null, component -> {
         }));
+
+        long listener = System.currentTimeMillis();
+
         gameProfileRepository.send(new ClientIntentionPacket(minecraftSessionService.toString(), 0, ConnectionProtocol.LOGIN));
         gameProfileRepository.send(new ServerboundHelloPacket(this.getUser().getGameProfile()));
+
+        long end = System.currentTimeMillis();
+
+        System.out.println("channel " + (channel - start) / 1000f);
+        System.out.println("connect " + (connect - start) / 1000f);
+        System.out.println("listener " + (listener - start) / 1000f);
+        System.out.println("end " + (end - start) / 1000f);
+        System.out.println("~~~~~");
+        System.out.println("channel " + (channel - start) / 1000f);
+        System.out.println("connect " + (connect - channel) / 1000f);
+        System.out.println("listener " + (listener - connect) / 1000f);
+        System.out.println("end " + (end - listener) / 1000f);
+
         return gameProfileRepository;
     }
+
+//    @Unique
+
 
 }

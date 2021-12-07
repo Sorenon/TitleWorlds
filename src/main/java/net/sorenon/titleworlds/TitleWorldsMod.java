@@ -7,14 +7,11 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.world.level.storage.LevelStorageException;
 import net.minecraft.world.level.storage.LevelStorageSource;
-import net.minecraft.world.level.storage.LevelSummary;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
-import java.util.Random;
+import java.nio.file.Path;
 
 public class TitleWorldsMod implements ClientModInitializer {
     public static final Logger LOGGER = LogManager.getLogger("Title World");
@@ -25,13 +22,12 @@ public class TitleWorldsMod implements ClientModInitializer {
 
     public static LevelStorageSource levelSource;
 
-    public static Random random = new Random();
-
     @Override
     public void onInitializeClient() {
         LOGGER.info("Opening level storage source");
         Minecraft minecraft = Minecraft.getInstance();
-        levelSource = new LevelStorageSource(minecraft.gameDirectory.toPath().resolve("titleworlds"), minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
+        Path titleWorldsPath = minecraft.gameDirectory.toPath().resolve("titleworlds");
+        levelSource = new LevelStorageSource(titleWorldsPath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
 
         keyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.titleworlds.opentitlescreen",
@@ -44,11 +40,6 @@ public class TitleWorldsMod implements ClientModInitializer {
                 client.setScreen(new TitleScreen());
             }
         });
-    }
-
-    public static String getRandomWorld() throws LevelStorageException {
-        List<LevelSummary> list = TitleWorldsMod.levelSource.getLevelList();
-        return list.get(random.nextInt(list.size())).getLevelId();
     }
 
     public static class State {
