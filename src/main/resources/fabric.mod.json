@@ -3,13 +3,14 @@
   "id": "titleworlds",
   "version": "${version}",
   "name": "Title Worlds",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "description": "Replaces the title screen cubemap with a real world.\nPrimarily meant for use with MCXR but also works in pancake mode.",
   "authors": [
-    "Me!"
+    "Sorenon"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://github.com/Sorenon/TitleWorlds",
+    "sources": "https://github.com/Sorenon/TitleWorlds",
+    "issues": "https://github.com/Sorenon/TitleWorlds/issues"
   },
   "license": "MIT",
   "icon": "assets/titleworlds/icon.png",
@@ -20,11 +21,18 @@
     ]
   },
   "mixins": [
-      "titleworlds.mixins.json"
+    "titleworlds.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.11.3",
     "minecraft": "1.18.x",
     "java": ">=16"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.discord": "https://discord.gg/CqEZbJwWx4"
+      }
+    }
   }
 }

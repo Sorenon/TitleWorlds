@@ -1,15 +1,12 @@
 package net.sorenon.titleworlds.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.renderer.PanoramaRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.storage.LevelStorageException;
 import net.sorenon.titleworlds.TitleWorldsMod;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,10 +29,14 @@ public class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("HEAD"))
     void checkLevelStorage(CallbackInfo ci) {
-        try {
-            this.noLevels = TitleWorldsMod.levelSource.getLevelList().isEmpty();
-        } catch (LevelStorageException e) {
-            e.printStackTrace();
+        if (TitleWorldsMod.state.isTitleWorld) {
+            this.noLevels = false;
+        } else {
+            try {
+                this.noLevels = TitleWorldsMod.levelSource.getLevelList().isEmpty();
+            } catch (LevelStorageException e) {
+                TitleWorldsMod.LOGGER.error(e);
+            }
         }
     }
 

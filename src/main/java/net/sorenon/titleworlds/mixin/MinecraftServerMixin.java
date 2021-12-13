@@ -15,9 +15,11 @@ public abstract class MinecraftServerMixin {
     @Shadow
     protected abstract void updateMobSpawningFlags();
 
+    /**
+     * Cuts down load time by approx 7s at the cost of having chunks pop in on world load
+     */
     @Inject(method = "prepareLevels", at = @At("HEAD"), cancellable = true)
-    void prepareLevels(ChunkProgressListener chunkProgressListener, CallbackInfo ci) {
-        //Cuts down load time by approx 7s
+    void skipLoadingChunksAroundPlayer(ChunkProgressListener chunkProgressListener, CallbackInfo ci) {
         if (TitleWorldsMod.state.isTitleWorld) {
             ci.cancel();
             this.updateMobSpawningFlags();

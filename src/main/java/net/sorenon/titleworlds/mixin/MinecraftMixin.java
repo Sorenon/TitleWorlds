@@ -72,10 +72,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     }
 
     @Shadow
-    @Final
-    private LevelStorageSource levelSource;
-
-    @Shadow
     public abstract void setScreen(@Nullable Screen guiScreen);
 
     @Shadow
@@ -118,6 +114,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
     @Shadow
     private volatile boolean running;
+
     @Unique
     private boolean closingLevel;
 
@@ -204,6 +201,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Unique
     private static final Random random = new Random();
 
+    @SuppressWarnings("UnusedReturnValue")
     @Unique
     public boolean tryLoadTitleWorld() {
         try {
@@ -248,11 +246,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 worldResources.getA().close();
                 worldResources.getC().close();
             } catch (InterruptedException | ExecutionException | IOException e) {
-                TitleWorldsMod.LOGGER.error("Exception caught when cleaning up async world load 1", e);
+                TitleWorldsMod.LOGGER.error("Exception caught when cleaning up async world load stage 1", e);
             }
         };
 
-        TitleWorldsMod.LOGGER.info("One");
+        TitleWorldsMod.LOGGER.info("Loading world resources");
         while (!worldResourcesFuture.isDone()) {
             this.runAllTasks();
             this.runTick(false);
@@ -273,11 +271,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 packRepository.close();
                 serverResourcesFuture.get().close();
             } catch (InterruptedException | ExecutionException | IOException e) {
-                TitleWorldsMod.LOGGER.error("Exception caught when cleaning up async world load 2", e);
+                TitleWorldsMod.LOGGER.error("Exception caught when cleaning up async world load stage 2", e);
             }
         };
 
-        TitleWorldsMod.LOGGER.info("Two");
+        TitleWorldsMod.LOGGER.info("Loading server resources");
         while (!serverResourcesFuture.isDone()) {
             this.runAllTasks();
             this.runTick(false);
@@ -293,7 +291,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         activeLoadingFuture = CompletableFuture.runAsync(() -> startSingleplayerServer(levelName, levelStorageAccess, dynamicRegistries, serverResources, worldResources.getB(), packRepository, quadFunction));
         cleanup = null;
 
-        TitleWorldsMod.LOGGER.info("Three");
+        TitleWorldsMod.LOGGER.info("Starting server");
         while (singleplayerServer == null || !this.singleplayerServer.isReady()) {
             this.runAllTasks();
             this.runTick(false);
@@ -302,12 +300,12 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
 
-        if (true) {
+        if (false) {
             var joinServerFuture = CompletableFuture.supplyAsync(this::joinSingleplayerServer);
 
             activeLoadingFuture = joinServerFuture;
 
-            TitleWorldsMod.LOGGER.info("Four");
+            TitleWorldsMod.LOGGER.info("Joining singleplayer server");
             while (!joinServerFuture.isDone()) {
                 this.runAllTasks();
                 this.runTick(false);
@@ -319,13 +317,14 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             this.pendingConnection = joinServerFuture.get();
 
         } else {
+            TitleWorldsMod.LOGGER.info("Joining singleplayer server");
             //This being async can rarely cause crashes
             activeLoadingFuture = null;
             this.pendingConnection = this.joinSingleplayerServer();
         }
 
 
-        TitleWorldsMod.LOGGER.info("Five");
+        TitleWorldsMod.LOGGER.info("Loading chunks");
     }
 
     @Unique
@@ -388,40 +387,21 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
     @Unique
     private Connection joinSingleplayerServer() {
-        long start = System.currentTimeMillis();
-
         SocketAddress minecraftSessionService = this.singleplayerServer.getConnection().startMemoryChannel();
+        Connection pendingConnection = Connection.connectToLocalServer(minecraftSessionService);
 
-        long channel = System.currentTimeMillis();
+        pendingConnection.setListener(
+                new ClientHandshakePacketListenerImpl(
+                        pendingConnection,
+                        (Minecraft) (Object) this,
+                        null,
+                        component -> {
+                        }
+                )
+        );
 
-        Connection gameProfileRepository = Connection.connectToLocalServer(minecraftSessionService);
-
-        long connect = System.currentTimeMillis();
-
-        gameProfileRepository.setListener(new ClientHandshakePacketListenerImpl(gameProfileRepository, (Minecraft) (Object) this, null, component -> {
-        }));
-
-        long listener = System.currentTimeMillis();
-
-        gameProfileRepository.send(new ClientIntentionPacket(minecraftSessionService.toString(), 0, ConnectionProtocol.LOGIN));
-        gameProfileRepository.send(new ServerboundHelloPacket(this.getUser().getGameProfile()));
-
-        long end = System.currentTimeMillis();
-
-        System.out.println("channel " + (channel - start) / 1000f);
-        System.out.println("connect " + (connect - start) / 1000f);
-        System.out.println("listener " + (listener - start) / 1000f);
-        System.out.println("end " + (end - start) / 1000f);
-        System.out.println("~~~~~");
-        System.out.println("channel " + (channel - start) / 1000f);
-        System.out.println("connect " + (connect - channel) / 1000f);
-        System.out.println("listener " + (listener - connect) / 1000f);
-        System.out.println("end " + (end - listener) / 1000f);
-
-        return gameProfileRepository;
+        pendingConnection.send(new ClientIntentionPacket(minecraftSessionService.toString(), 0, ConnectionProtocol.LOGIN));
+        pendingConnection.send(new ServerboundHelloPacket(this.getUser().getGameProfile()));
+        return pendingConnection;
     }
-
-//    @Unique
-
-
 }
