@@ -183,8 +183,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             } else if (guiScreen instanceof ProgressScreen || guiScreen instanceof ReceivingLevelScreen) {
                 ci.cancel();
             }
-        } else {
-            System.out.println(guiScreen);
         }
     }
 
@@ -295,7 +293,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
 
-        if (false) {
+//        if (false) {
             var joinServerFuture = CompletableFuture.supplyAsync(this::joinSingleplayerServer);
 
             activeLoadingFuture = joinServerFuture;
@@ -311,12 +309,12 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             activeLoadingFuture = null;
             this.pendingConnection = joinServerFuture.get();
 
-        } else {
-            TitleWorldsMod.LOGGER.info("Joining singleplayer server");
-            //This being async can rarely cause crashes
-            activeLoadingFuture = null;
-            this.pendingConnection = this.joinSingleplayerServer();
-        }
+//        } else {
+//            TitleWorldsMod.LOGGER.info("Joining singleplayer server");
+//            //This being async can rarely cause crashes
+//            activeLoadingFuture = null;
+//            this.pendingConnection = this.joinSingleplayerServer();
+//        }
 
 
         TitleWorldsMod.LOGGER.info("Loading chunks");

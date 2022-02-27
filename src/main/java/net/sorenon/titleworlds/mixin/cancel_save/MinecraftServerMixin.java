@@ -1,0 +1,19 @@
+package net.sorenon.titleworlds.mixin.cancel_save;
+
+import net.minecraft.server.MinecraftServer;
+import net.sorenon.titleworlds.TitleWorldsMod;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(MinecraftServer.class)
+public class MinecraftServerMixin {
+
+    @Inject(method = "saveAllChunks", at = @At("HEAD"), cancellable = true)
+    void cancelSave(boolean bl, boolean bl2, boolean bl3, CallbackInfoReturnable<Boolean> cir) {
+        if (TitleWorldsMod.state.isTitleWorld && TitleWorldsMod.state.noSave) {
+            cir.setReturnValue(false);
+        }
+    }
+}
