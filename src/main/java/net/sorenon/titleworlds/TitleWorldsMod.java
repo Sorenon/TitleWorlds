@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TitleWorldsMod implements ClientModInitializer {
     public static final Logger LOGGER = LogManager.getLogger("Title World");
