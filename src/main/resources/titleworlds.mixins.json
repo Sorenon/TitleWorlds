@@ -4,15 +4,18 @@
   "package": "net.sorenon.titleworlds.mixin",
   "compatibilityLevel": "JAVA_16",
   "client": [
+    "ClientPacketListenerMixin",
+    "ConnectScreenMixin",
+    "GameRendererMixin",
     "MinecraftMixin",
+    "MinecraftServerMixin",
     "TitleScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "mixins": [
-    "ClientPacketListenerMixin",
-    "GameRendererMixin",
-    "MinecraftServerMixin"
+    "ConnectScreenThreadMixin",
+    "RealmsConnectThreadMixin"
   ]
 }

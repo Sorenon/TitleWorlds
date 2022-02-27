@@ -41,7 +41,7 @@ public class TitleScreenMixin extends Screen {
     }
 
     @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/PanoramaRenderer;render(FF)V"), method = "render")
-    void cancel(PanoramaRenderer instance, float f, float g) {
+    void cancelCubemapRender(PanoramaRenderer instance, float f, float g) {
         if (Minecraft.getInstance().level == null || !Minecraft.getInstance().isRunning()) {
             if (TitleWorldsMod.state.isTitleWorld) {
                 this.renderDirtBackground(0);

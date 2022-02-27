@@ -172,13 +172,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         }
     }
 
-    @Inject(method = "setCurrentServer", at = @At("HEAD"))
-    void setCurrentServer(CallbackInfo ci) {
-        if (this.level != null) {
-            this.clearLevel();
-        }
-    }
-
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     void setScreen(Screen guiScreen, CallbackInfo ci) {
         if (TitleWorldsMod.state.isTitleWorld) {
@@ -190,6 +183,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             } else if (guiScreen instanceof ProgressScreen || guiScreen instanceof ReceivingLevelScreen) {
                 ci.cancel();
             }
+        } else {
+            System.out.println(guiScreen);
         }
     }
 

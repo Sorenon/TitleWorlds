@@ -24,7 +24,7 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Gui;render(Lcom/mojang/blaze3d/vertex/PoseStack;F)V"))
     void preRenderGui(float f, long l, boolean bl, CallbackInfo ci) {
-        if (this.minecraft.screen instanceof TitleScreen) {
+        if (TitleWorldsMod.state.isTitleWorld) {
             this.hideGui = this.minecraft.options.hideGui;
             this.minecraft.options.hideGui = true;
         }
@@ -32,14 +32,14 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "INVOKE", shift = At.Shift.AFTER, target = "Lnet/minecraft/client/gui/Gui;render(Lcom/mojang/blaze3d/vertex/PoseStack;F)V"))
     void postRenderGui(float f, long l, boolean bl, CallbackInfo ci) {
-        if (this.minecraft.screen instanceof TitleScreen) {
+        if (TitleWorldsMod.state.isTitleWorld) {
             this.minecraft.options.hideGui = this.hideGui;
         }
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel(FJLcom/mojang/blaze3d/vertex/PoseStack;)V"))
     void preRenderLevel(float f, long l, boolean bl, CallbackInfo ci) {
-        if (this.minecraft.screen instanceof TitleScreen) {
+        if (TitleWorldsMod.state.isTitleWorld) {
             this.hideGui = this.minecraft.options.hideGui;
             this.minecraft.options.hideGui = true;
         }
@@ -47,7 +47,7 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "INVOKE", shift = At.Shift.AFTER, target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel(FJLcom/mojang/blaze3d/vertex/PoseStack;)V"))
     void postRenderLevel(float f, long l, boolean bl, CallbackInfo ci) {
-        if (this.minecraft.screen instanceof TitleScreen) {
+        if (TitleWorldsMod.state.isTitleWorld) {
             this.minecraft.options.hideGui = this.hideGui;
         }
     }
