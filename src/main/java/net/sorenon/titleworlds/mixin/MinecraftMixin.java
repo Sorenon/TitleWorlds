@@ -203,7 +203,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 TitleWorldsMod.LOGGER.info("TitleWorlds folder is empty");
                 return false;
             }
-            this.loadTitleWorld(list.get(random.nextInt(list.size())).getLevelId(), RegistryAccess.builtin(), Minecraft::loadDataPacks, Minecraft::loadWorldData, false);
+            this.loadTitleWorld(list.get(random.nextInt(list.size())).getLevelId(), RegistryAccess.builtin(), Minecraft::loadDataPacks, Minecraft::loadWorldData);
             return true;
         } catch (ExecutionException | InterruptedException | LevelStorageException e) {
             TitleWorldsMod.LOGGER.error("Exception when loading title world", e);
@@ -223,14 +223,13 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     private void loadTitleWorld(String levelName,
                                 RegistryAccess.RegistryHolder dynamicRegistries,
                                 Function<LevelStorageSource.LevelStorageAccess, DataPackConfig> levelSaveToDatapackFunction,
-                                Function4<LevelStorageSource.LevelStorageAccess, RegistryAccess.RegistryHolder, ResourceManager, DataPackConfig, WorldData> quadFunction,
-                                boolean vanillaOnly
+                                Function4<LevelStorageSource.LevelStorageAccess, RegistryAccess.RegistryHolder, ResourceManager, DataPackConfig, WorldData> quadFunction
     ) throws ExecutionException, InterruptedException {
         TitleWorldsMod.LOGGER.info("Loading title world");
         TitleWorldsMod.state.isTitleWorld = true;
         TitleWorldsMod.state.pause = false;
 
-        var worldResourcesFuture = CompletableFuture.supplyAsync(() -> openWorldResources(levelName, dynamicRegistries, levelSaveToDatapackFunction, vanillaOnly));
+        var worldResourcesFuture = CompletableFuture.supplyAsync(() -> openWorldResources(levelName, dynamicRegistries, levelSaveToDatapackFunction, false));
 
         activeLoadingFuture = worldResourcesFuture;
         cleanup = () -> {

@@ -9,17 +9,16 @@
     "GameRendererMixin",
     "MinecraftMixin",
     "MinecraftServerMixin",
-    "TitleScreenMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  },
-  "mixins": [
+    "TitleScreenMixin",
     "ConnectScreenThreadMixin",
     "RealmsConnectThreadMixin",
     "cancel_save.LevelMixin",
     "cancel_save.MinecraftServerMixin",
+    "cancel_save.PersistentEntitySectionManagerMixin",
     "cancel_save.PlayerListMixin",
     "cancel_save.ServerChunkCacheMixin"
-  ]
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }
