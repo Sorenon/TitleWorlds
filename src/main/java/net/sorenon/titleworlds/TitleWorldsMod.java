@@ -27,7 +27,7 @@ public class TitleWorldsMod implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("Opening level storage source");
         Minecraft minecraft = Minecraft.getInstance();
-        Path titleWorldsPath = minecraft.gameDirectory.toPath().resolve("testtitleworlds");
+        Path titleWorldsPath = minecraft.gameDirectory.toPath().resolve("titleworlds");
         levelSource = new LevelStorageSource(titleWorldsPath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
 
         keyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
