@@ -6,17 +6,19 @@
   "client": [
     "ClientPacketListenerMixin",
     "ConnectScreenMixin",
+    "ConnectScreenThreadMixin",
     "GameRendererMixin",
     "MinecraftMixin",
     "MinecraftServerMixin",
-    "TitleScreenMixin",
-    "ConnectScreenThreadMixin",
     "RealmsConnectThreadMixin",
-    "cancel_save.LevelMixin",
-    "cancel_save.MinecraftServerMixin",
+    "TitleScreenMixin",
+    "cancel_save.needed.MinecraftServerMixin",
+    "cancel_save.needed.EntityStorageMixin",
+    "cancel_save.needed.PlayerListMixin",
+    "cancel_save.needed.ChunkMapMixin",
+    "cancel_save.ServerChunkCacheMixin",
     "cancel_save.PersistentEntitySectionManagerMixin",
-    "cancel_save.PlayerListMixin",
-    "cancel_save.ServerChunkCacheMixin"
+    "cancel_save.ChunkMapMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -14,10 +14,10 @@ public class ClientPacketListenerMixin {
     /**
      * Prevents the game from trying to close the current screen when the player joins a title world
      */
-    @Redirect(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"))
-    void cancelSetScreen(Minecraft instance, Screen screen) {
-        if (!TitleWorldsMod.state.isTitleWorld) {
-            instance.setScreen(null);
-        }
-    }
+//    @Redirect(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"))
+//    void cancelSetScreen(Minecraft instance, Screen screen) {
+//        if (!TitleWorldsMod.state.isTitleWorld) {
+//            instance.setScreen(null);
+//        }
+//    }
 }

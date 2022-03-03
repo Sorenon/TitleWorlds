@@ -3,7 +3,6 @@ package net.sorenon.titleworlds.mixin;
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
-import com.mojang.datafixers.util.Function4;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
@@ -22,18 +21,12 @@ import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import net.minecraft.network.protocol.login.ServerboundHelloPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerResources;
+import net.minecraft.server.WorldStem;
 import net.minecraft.server.level.progress.ProcessorChunkProgressListener;
 import net.minecraft.server.level.progress.StoringChunkProgressListener;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.repository.FolderRepositorySource;
 import net.minecraft.server.packs.repository.PackRepository;
-import net.minecraft.server.packs.repository.PackSource;
-import net.minecraft.server.packs.repository.ServerPacksSource;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
-import net.minecraft.world.level.DataPackConfig;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.storage.*;
 import net.sorenon.titleworlds.TitleWorldsMod;
@@ -45,7 +38,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import oshi.util.tuples.Quartet;
+import oshi.util.tuples.Triplet;
 
 import java.io.File;
 import java.io.IOException;
@@ -110,10 +103,12 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     public Screen screen;
 
     @Shadow
-    public abstract void clearLevel();
+    private volatile boolean running;
 
     @Shadow
-    private volatile boolean running;
+    private static PackRepository createPackRepository(LevelStorageSource.LevelStorageAccess levelStorageAccess) {
+        throw new UnsupportedOperationException();
+    }
 
     @Unique
     private boolean closingLevel;
@@ -165,9 +160,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Inject(method = "clearLevel(Lnet/minecraft/client/gui/screens/Screen;)V", at = @At("RETURN"))
     void postClearLevel(Screen screen, CallbackInfo ci) {
         if (TitleWorldsMod.state.isTitleWorld) {
+            TitleWorldsMod.LOGGER.info("Closing Title World");
             TitleWorldsMod.state.isTitleWorld = false;
             TitleWorldsMod.state.pause = false;
         } else if (this.closingLevel && this.running) {
+            TitleWorldsMod.LOGGER.info("Loading Title World");
             tryLoadTitleWorld();
         }
     }
@@ -203,7 +200,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 TitleWorldsMod.LOGGER.info("TitleWorlds folder is empty");
                 return false;
             }
-            this.loadTitleWorld(list.get(random.nextInt(list.size())).getLevelId(), RegistryAccess.builtin(), Minecraft::loadDataPacks, Minecraft::loadWorldData);
+            this.loadTitleWorld(list.get(random.nextInt(list.size())).getLevelId(), WorldStem.DataPackConfigSupplier::loadFromWorld, WorldStem.WorldDataSupplier::loadFromWorld);
             return true;
         } catch (ExecutionException | InterruptedException | LevelStorageException e) {
             TitleWorldsMod.LOGGER.error("Exception when loading title world", e);
@@ -221,22 +218,22 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
     @Unique
     private void loadTitleWorld(String levelName,
-                                RegistryAccess.RegistryHolder dynamicRegistries,
-                                Function<LevelStorageSource.LevelStorageAccess, DataPackConfig> levelSaveToDatapackFunction,
-                                Function4<LevelStorageSource.LevelStorageAccess, RegistryAccess.RegistryHolder, ResourceManager, DataPackConfig, WorldData> quadFunction
+                                Function<LevelStorageSource.LevelStorageAccess, WorldStem.DataPackConfigSupplier> dataPackConfigSupplier,
+                                Function<LevelStorageSource.LevelStorageAccess, WorldStem.WorldDataSupplier> worldDataSupplier
     ) throws ExecutionException, InterruptedException {
         TitleWorldsMod.LOGGER.info("Loading title world");
         TitleWorldsMod.state.isTitleWorld = true;
         TitleWorldsMod.state.pause = false;
 
-        var worldResourcesFuture = CompletableFuture.supplyAsync(() -> openWorldResources(levelName, dynamicRegistries, levelSaveToDatapackFunction, false));
+        var worldResourcesFuture
+                = CompletableFuture.supplyAsync(() -> openWorldResources(levelName, dataPackConfigSupplier, worldDataSupplier, false));
 
         activeLoadingFuture = worldResourcesFuture;
         cleanup = () -> {
             try {
                 var worldResources = worldResourcesFuture.get();
                 worldResources.getA().close();
-                worldResources.getC().close();
+                worldResources.getB().close();
             } catch (InterruptedException | ExecutionException | IOException e) {
                 TitleWorldsMod.LOGGER.error("Exception caught when cleaning up async world load stage 1", e);
             }
@@ -253,22 +250,22 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
         var worldResources = worldResourcesFuture.get();
         LevelStorageSource.LevelStorageAccess levelStorageAccess = worldResources.getA();
-        PackRepository packRepository = worldResources.getC();
-        CompletableFuture<ServerResources> serverResourcesFuture = worldResources.getD();
+        PackRepository packRepository = worldResources.getB();
+        CompletableFuture<WorldStem> worldStemCompletableFuture = worldResources.getC();
 
-        activeLoadingFuture = serverResourcesFuture;
+        activeLoadingFuture = worldStemCompletableFuture;
         cleanup = () -> {
             try {
                 levelStorageAccess.close();
                 packRepository.close();
-                serverResourcesFuture.get().close();
+                worldStemCompletableFuture.get().close();
             } catch (InterruptedException | ExecutionException | IOException e) {
                 TitleWorldsMod.LOGGER.error("Exception caught when cleaning up async world load stage 2", e);
             }
         };
 
         TitleWorldsMod.LOGGER.info("Loading server resources");
-        while (!serverResourcesFuture.isDone()) {
+        while (!worldStemCompletableFuture.isDone()) {
             this.runAllTasks();
             this.runTick(false);
             if (!TitleWorldsMod.state.isTitleWorld) {
@@ -276,11 +273,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
 
-        ServerResources serverResources = serverResourcesFuture.get();
+        WorldStem worldStem = worldStemCompletableFuture.get();
 
         this.progressListener.set(null);
 
-        activeLoadingFuture = CompletableFuture.runAsync(() -> startSingleplayerServer(levelName, levelStorageAccess, dynamicRegistries, serverResources, worldResources.getB(), packRepository, quadFunction));
+        activeLoadingFuture = CompletableFuture.runAsync(() -> startSingleplayerServer(levelName, levelStorageAccess, worldStem, packRepository));
         cleanup = null;
 
         TitleWorldsMod.LOGGER.info("Starting server");
@@ -293,20 +290,20 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         }
 
 //        if (false) {
-            var joinServerFuture = CompletableFuture.supplyAsync(this::joinSingleplayerServer);
+        var joinServerFuture = CompletableFuture.supplyAsync(this::joinSingleplayerServer);
 
-            activeLoadingFuture = joinServerFuture;
+        activeLoadingFuture = joinServerFuture;
 
-            TitleWorldsMod.LOGGER.info("Joining singleplayer server");
-            while (!joinServerFuture.isDone()) {
-                this.runAllTasks();
-                this.runTick(false);
-                if (!TitleWorldsMod.state.isTitleWorld) {
-                    return;
-                }
+        TitleWorldsMod.LOGGER.info("Joining singleplayer server");
+        while (!joinServerFuture.isDone()) {
+            this.runAllTasks();
+            this.runTick(false);
+            if (!TitleWorldsMod.state.isTitleWorld) {
+                return;
             }
-            activeLoadingFuture = null;
-            this.pendingConnection = joinServerFuture.get();
+        }
+        activeLoadingFuture = null;
+        this.pendingConnection = joinServerFuture.get();
 
 //        } else {
 //            TitleWorldsMod.LOGGER.info("Joining singleplayer server");
@@ -320,10 +317,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     }
 
     @Unique
-    private Quartet<LevelStorageSource.LevelStorageAccess, DataPackConfig, PackRepository, CompletableFuture<ServerResources>> openWorldResources(
+    private Triplet<LevelStorageSource.LevelStorageAccess, PackRepository, CompletableFuture<WorldStem>> openWorldResources(
             String levelName,
-            RegistryAccess.RegistryHolder dynamicRegistries,
-            Function<LevelStorageSource.LevelStorageAccess, DataPackConfig> levelSaveToDatapackFunction,
+            Function<LevelStorageSource.LevelStorageAccess, WorldStem.DataPackConfigSupplier> dataPackConfigSupplierFunction,
+            Function<LevelStorageSource.LevelStorageAccess, WorldStem.WorldDataSupplier> worldDataSupplierFunction,
             boolean vanillaOnly
     ) {
         LevelStorageSource.LevelStorageAccess levelStorageAccess;
@@ -333,28 +330,31 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             throw new RuntimeException("Failed to read data");
         }
 
-        DataPackConfig dataPackConfig = levelSaveToDatapackFunction.apply(levelStorageAccess);
-        PackRepository packRepository = new PackRepository(PackType.SERVER_DATA, new ServerPacksSource(), new FolderRepositorySource(levelStorageAccess.getLevelPath(LevelResource.DATAPACK_DIR).toFile(), PackSource.WORLD));
-        DataPackConfig dataPackConfig2 = MinecraftServer.configurePackRepository(packRepository, dataPackConfig, vanillaOnly);
-        CompletableFuture<ServerResources> completableFuture = ServerResources.loadResources(packRepository.openAllSelected(), dynamicRegistries, Commands.CommandSelection.INTEGRATED, 2, Util.backgroundExecutor(), this);
-        return new Quartet<>(levelStorageAccess, dataPackConfig2, packRepository, completableFuture);
+        var dataPackConfigSupplier = dataPackConfigSupplierFunction.apply(levelStorageAccess);
+        var worldDataSupplier = worldDataSupplierFunction.apply(levelStorageAccess);
+        var packRepository = createPackRepository(levelStorageAccess);
+        var initConfig = new WorldStem.InitConfig(packRepository, Commands.CommandSelection.INTEGRATED, 2, vanillaOnly);
+        var completableFuture = WorldStem.load(
+                initConfig, dataPackConfigSupplier, worldDataSupplier, Util.backgroundExecutor(), this
+        );
+
+        return new Triplet<>(levelStorageAccess, packRepository, completableFuture);
     }
 
     @Unique
     private void startSingleplayerServer(
             String levelName,
             LevelStorageSource.LevelStorageAccess levelStorageAccess,
-            RegistryAccess.RegistryHolder dynamicRegistries,
-            ServerResources serverResources,
-            DataPackConfig dataPackConfig,
-            PackRepository packRepository,
-            Function4<LevelStorageSource.LevelStorageAccess, RegistryAccess.RegistryHolder, ResourceManager, DataPackConfig, WorldData> quadFunction
+            WorldStem worldStem,
+            PackRepository packRepository
     ) {
-        WorldData worldData = quadFunction.apply(levelStorageAccess, dynamicRegistries, serverResources.getResourceManager(), dataPackConfig);
+        WorldData worldData = worldStem.worldData();
+        this.progressListener.set(null);
 
         try {
-            levelStorageAccess.saveDataTag(dynamicRegistries, worldData);
-            serverResources.updateGlobals();
+            RegistryAccess.Frozen registryAccess = worldStem.registryAccess();
+            levelStorageAccess.saveDataTag(registryAccess, worldData);
+            worldStem.updateGlobals();
             YggdrasilAuthenticationService iOException4 = new YggdrasilAuthenticationService(this.proxy);
             MinecraftSessionService minecraftSessionService = iOException4.createMinecraftSessionService();
             GameProfileRepository gameProfileRepository = iOException4.createProfileRepository();
@@ -362,7 +362,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             gameProfileCache.setExecutor((Minecraft) (Object) this);
             SkullBlockEntity.setup(gameProfileCache, minecraftSessionService, this);
             GameProfileCache.setUsesAuthentication(false);
-            this.singleplayerServer = MinecraftServer.spin(thread -> new IntegratedServer(thread, (Minecraft) (Object) this, dynamicRegistries, levelStorageAccess, packRepository, serverResources, worldData, minecraftSessionService, gameProfileRepository, gameProfileCache, i -> {
+            this.singleplayerServer = MinecraftServer.spin(thread -> new IntegratedServer(thread, (Minecraft) (Object) this, levelStorageAccess, packRepository, worldStem, minecraftSessionService, gameProfileRepository, gameProfileCache, i -> {
                 StoringChunkProgressListener storingChunkProgressListener = new StoringChunkProgressListener(i);
                 this.progressListener.set(storingChunkProgressListener);
                 return ProcessorChunkProgressListener.createStarted(storingChunkProgressListener, this.progressTasks::add);
