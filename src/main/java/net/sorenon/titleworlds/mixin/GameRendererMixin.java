@@ -1,7 +1,6 @@
 package net.sorenon.titleworlds.mixin;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.sorenon.titleworlds.TitleWorldsMod;
 import org.spongepowered.asm.mixin.Final;

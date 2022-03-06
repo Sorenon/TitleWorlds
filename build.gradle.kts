@@ -2,6 +2,7 @@ plugins {
     id("fabric-loom") version "0.10-SNAPSHOT"
     id("io.github.juuxel.loom-quiltflower-mini") version "1.2.1"
     id("maven-publish")
+    id("org.quiltmc.quilt-mappings-on-loom") version "3.1.1"
 }
 
 base {
@@ -25,8 +26,8 @@ repositories {
 dependencies {
     minecraft("com.mojang:minecraft:${properties["minecraft_version"].toString()}")
     mappings(loom.layered {
+        this.addLayer(quiltMappings.mappings("org.quiltmc:quilt-mappings:${properties["minecraft_version"].toString()}+build.${properties["quilt_mappings"].toString()}:v2"))
         officialMojangMappings()
-//		parchment("org.parchmentmc.data:parchment-1.17.1:2021.10.31@zip")
     })
     modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
 
@@ -35,6 +36,10 @@ dependencies {
 //    modRuntimeOnly("supercoder79:databreaker:${properties["databreaker_version"].toString()}") {
 //        isTransitive = false
 //    }
+}
+
+loom {
+    this.accessWidenerPath.set(file("src/main/resources/titleworlds.accesswidener"))
 }
 
 tasks {
