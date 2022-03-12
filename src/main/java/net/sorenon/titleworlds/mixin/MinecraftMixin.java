@@ -30,6 +30,8 @@ import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.storage.*;
 import net.sorenon.titleworlds.TitleWorldsMod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -112,6 +114,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
     @Unique
     private boolean closingLevel;
+
+    @Unique
+    private static final Logger LOGGER = LogManager.getLogger("Title World Loader");
 
     /**
      * Called when joining / leaving a server
@@ -197,13 +202,13 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         try {
             List<LevelSummary> list = TitleWorldsMod.levelSource.getLevelList();
             if (list.isEmpty()) {
-                TitleWorldsMod.LOGGER.info("TitleWorlds folder is empty");
+                LOGGER.info("TitleWorlds folder is empty");
                 return false;
             }
             this.loadTitleWorld(list.get(random.nextInt(list.size())).getLevelId(), WorldStem.DataPackConfigSupplier::loadFromWorld, WorldStem.WorldDataSupplier::loadFromWorld);
             return true;
         } catch (ExecutionException | InterruptedException | LevelStorageException e) {
-            TitleWorldsMod.LOGGER.error("Exception when loading title world", e);
+            LOGGER.error("Exception when loading title world", e);
             return false;
         }
     }
@@ -221,7 +226,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                                 Function<LevelStorageSource.LevelStorageAccess, WorldStem.DataPackConfigSupplier> dataPackConfigSupplier,
                                 Function<LevelStorageSource.LevelStorageAccess, WorldStem.WorldDataSupplier> worldDataSupplier
     ) throws ExecutionException, InterruptedException {
-        TitleWorldsMod.LOGGER.info("Loading title world");
+        LOGGER.info("Loading title world");
         TitleWorldsMod.state.isTitleWorld = true;
         TitleWorldsMod.state.pause = false;
 
@@ -235,11 +240,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 worldResources.getA().close();
                 worldResources.getB().close();
             } catch (InterruptedException | ExecutionException | IOException e) {
-                TitleWorldsMod.LOGGER.error("Exception caught when cleaning up async world load stage 1", e);
+                LOGGER.error("Exception caught when cleaning up async world load stage 1", e);
             }
         };
 
-        TitleWorldsMod.LOGGER.info("Loading world resources");
+        LOGGER.info("Loading world resources");
         while (!worldResourcesFuture.isDone()) {
             this.runAllTasks();
             this.runTick(false);
@@ -264,7 +269,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         };
 
-        TitleWorldsMod.LOGGER.info("Loading server resources");
+        LOGGER.info("Waiting for WorldStem to load");
         while (!worldStemCompletableFuture.isDone()) {
             this.runAllTasks();
             this.runTick(false);
@@ -277,10 +282,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
         this.progressListener.set(null);
 
+        LOGGER.info("Starting server");
         activeLoadingFuture = CompletableFuture.runAsync(() -> startSingleplayerServer(levelName, levelStorageAccess, worldStem, packRepository));
         cleanup = null;
 
-        TitleWorldsMod.LOGGER.info("Starting server");
         while (singleplayerServer == null || !this.singleplayerServer.isReady()) {
             this.runAllTasks();
             this.runTick(false);
@@ -289,12 +294,15 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
 
+        LOGGER.info("Joining singleplayer server");
+        //This being async can cause a horrifically rare crash
+        //While the mods is in beta I'll leave this async in the hope I'll get some extra data on this
+        //The instability may not be worth the 1s gain if I cannot fix this
 //        if (false) {
         var joinServerFuture = CompletableFuture.supplyAsync(this::joinSingleplayerServer);
 
         activeLoadingFuture = joinServerFuture;
 
-        TitleWorldsMod.LOGGER.info("Joining singleplayer server");
         while (!joinServerFuture.isDone()) {
             this.runAllTasks();
             this.runTick(false);
@@ -304,16 +312,13 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         }
         activeLoadingFuture = null;
         this.pendingConnection = joinServerFuture.get();
-
 //        } else {
-//            TitleWorldsMod.LOGGER.info("Joining singleplayer server");
-//            //This being async can rarely cause crashes
 //            activeLoadingFuture = null;
 //            this.pendingConnection = this.joinSingleplayerServer();
 //        }
 
 
-        TitleWorldsMod.LOGGER.info("Loading chunks");
+        LOGGER.info("Logging into title world");
     }
 
     @Unique
