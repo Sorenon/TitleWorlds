@@ -40,6 +40,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import oshi.util.tuples.Pair;
 import oshi.util.tuples.Triplet;
 
 import java.io.File;
@@ -295,11 +296,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         }
 
         LOGGER.info("Joining singleplayer server");
-        //This being async can cause a horrifically rare crash
-        //While the mods is in beta I'll leave this async in the hope I'll get some extra data on this
-        //The instability may not be worth the 1s gain if I cannot fix this
-//        if (false) {
-        var joinServerFuture = CompletableFuture.supplyAsync(this::joinSingleplayerServer);
+        var joinServerFuture = CompletableFuture.runAsync(this::joinSingleplayerServer);
 
         activeLoadingFuture = joinServerFuture;
 
@@ -311,12 +308,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
         activeLoadingFuture = null;
-        this.pendingConnection = joinServerFuture.get();
-//        } else {
-//            activeLoadingFuture = null;
-//            this.pendingConnection = this.joinSingleplayerServer();
-//        }
-
 
         LOGGER.info("Logging into title world");
     }
@@ -383,7 +374,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     }
 
     @Unique
-    private Connection joinSingleplayerServer() {
+    private void joinSingleplayerServer() {
         SocketAddress minecraftSessionService = this.singleplayerServer.getConnection().startMemoryChannel();
         Connection pendingConnection = Connection.connectToLocalServer(minecraftSessionService);
 
@@ -398,7 +389,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         );
 
         pendingConnection.send(new ClientIntentionPacket(minecraftSessionService.toString(), 0, ConnectionProtocol.LOGIN));
+
+        //this.pendingConnection must be set before sending ServerboundHelloPacket or a rare crash can occur
+        this.pendingConnection = pendingConnection;
         pendingConnection.send(new ServerboundHelloPacket(this.getUser().getGameProfile()));
-        return pendingConnection;
     }
 }

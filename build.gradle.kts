@@ -1,12 +1,12 @@
 plugins {
-    id("fabric-loom") version "0.10-SNAPSHOT"
-    id("io.github.juuxel.loom-quiltflower-mini") version "1.2.1"
+    id("fabric-loom") version "0.11-SNAPSHOT"
+    id("io.github.juuxel.loom-quiltflower") version "+"
     id("maven-publish")
-    id("org.quiltmc.quilt-mappings-on-loom") version "3.1.1"
+    id("org.quiltmc.quilt-mappings-on-loom") version "4.0.0"
 }
 
 base {
-    archivesBaseName = properties["archives_base_name"].toString()
+    archivesName.set(properties["archives_base_name"].toString())
 }
 
 version = properties["mod_version"].toString()
@@ -33,6 +33,9 @@ dependencies {
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:${properties["fabric_version"].toString()}")
 
+
+    include(implementation("com.electronwill.night-config:core:${properties["night_config_version"].toString()}")!!)
+    include(implementation("com.electronwill.night-config:toml:${properties["night_config_version"].toString()}")!!)
 //    modRuntimeOnly("supercoder79:databreaker:${properties["databreaker_version"].toString()}") {
 //        isTransitive = false
 //    }
