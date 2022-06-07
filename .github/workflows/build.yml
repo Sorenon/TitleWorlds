@@ -32,4 +32,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: title-worlds
-          path: build/libs/titleworlds-0.1.0.jar
+          path: build/libs/titleworlds-0.1.0+1.18.2.jar
