@@ -9,7 +9,7 @@ base {
     archivesName.set(properties["archives_base_name"].toString())
 }
 
-version = "${properties["mod_version"].toString()}+${properties["minecraft_version"].toString()}""
+version = "${properties["mod_version"].toString()}+${properties["minecraft_version"].toString()}"
 group = properties["maven_group"].toString()
 
 repositories {
