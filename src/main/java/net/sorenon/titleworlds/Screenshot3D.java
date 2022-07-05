@@ -21,6 +21,7 @@ import net.minecraft.core.WritableRegistry;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.WorldLoader;
 import net.minecraft.server.WorldStem;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.FolderRepositorySource;
@@ -38,6 +39,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.PrimaryLevelData;
 import net.minecraft.world.level.storage.WorldData;
+import net.sorenon.titleworlds.mixin.accessor.WorldOpenFlowsAcc;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -61,96 +63,16 @@ public class Screenshot3D {
 //        TODO Screenshot.grab();
 //        TODO FileUtil.findAvailableName
 
-        ClientLevel.ClientLevelData originLevelData = originLevel.getLevelData();
-
-        LevelSettings levelSettings = new LevelSettings(
-                name,
-                GameType.CREATIVE,
-                false,
-                originLevelData.getDifficulty(),
-                true,
-                originLevelData.getGameRules(),
-                DataPackConfig.DEFAULT
-        );
-
-        RegistryAccess registryAccess = originLevel.registryAccess();
-
-        WritableRegistry<LevelStem> levelStems = new MappedRegistry<>(
-                Registry.LEVEL_STEM_REGISTRY, Lifecycle.experimental(), null
-        );
-        levelStems.register(
-                ResourceKey.create(Registry.LEVEL_STEM_REGISTRY, originLevel.dimension().location()),
-                new LevelStem(
-                        originLevel.dimensionTypeRegistration(),
-                        new FlatLevelSource(
-                                registryAccess.registryOrThrow(Registry.STRUCTURE_SET_REGISTRY),
-                                new FlatLevelGeneratorSettings(Optional.empty(), registryAccess.registryOrThrow(Registry.BIOME_REGISTRY))
-                        )
-                ),
-                Lifecycle.stable()
-        );
-
-        WorldGenSettings worldGenSettings = new WorldGenSettings(
-                0,
-                false,
-                false,
-                WorldGenSettings.withOverworld(
-                        registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY),
-                        levelStems,
-                        new FlatLevelSource(
-                                registryAccess.registryOrThrow(Registry.STRUCTURE_SET_REGISTRY),
-                                new FlatLevelGeneratorSettings(Optional.empty(), registryAccess.registryOrThrow(Registry.BIOME_REGISTRY))
-                        )
-                )
-        );
-
         createSnapshotWorldAndSave(
                 name,
-                originLevel,
-                levelStorageAccess -> levelSettings::getDataPackConfig,
-                levelStorageAccess -> (resourceManager, dataPackConfig) -> {
-                    RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
-                    DynamicOps<JsonElement> dynamicOps = RegistryOps.create(JsonOps.INSTANCE, registryAccess);
-                    DynamicOps<JsonElement> dynamicOps2 = RegistryOps.createAndLoad(JsonOps.INSTANCE, writable, resourceManager);
-                    DataResult<WorldGenSettings> dataResult = WorldGenSettings.CODEC
-                            .encodeStart(dynamicOps, worldGenSettings)
-                            .setLifecycle(Lifecycle.stable())
-                            .flatMap(jsonElement -> WorldGenSettings.CODEC.parse(dynamicOps2, jsonElement));
-                    WorldGenSettings worldGenSettings2 = dataResult.getOrThrow(
-                            false, Util.prefix("Error reading worldgen settings after loading data packs: ", LOGGER::error)
-                    );
-                    var levelData = new PrimaryLevelData(levelSettings, worldGenSettings2, dataResult.lifecycle());
-//                    levelData.setSpawn(originLevel.getSharedSpawnPos(), originLevel.getSharedSpawnAngle());
-                    levelData.setSpawn(Minecraft.getInstance().player.blockPosition(), Minecraft.getInstance().player.yHeadRot);
-                    levelData.setDayTime(originLevelData.getDayTime());
-                    levelData.setGameTime(originLevelData.getGameTime());
-//                                        loadedPlayerTag
-//                                        levelData.setClearWeatherTime();
-                    levelData.setRaining(originLevelData.isRaining());
-//                                        levelData.setRainTime();
-                    levelData.setThundering(originLevelData.isThundering());
-//                                        levelData.setThunderTime();
-//                                        levelData.setInitialized();
-//                                        levelData.setWorldBorder();
-//                                        levelData.setEndDragonFightData();
-//                                        levelData.setCustomBossEvents();
-//                                        levelData.setWanderingTraderSpawnDelay();
-//                                        levelData.setWanderingTraderSpawnChance();
-//                                        levelData.setWanderingTraderId();
-//                                        knownServerBrands
-//                                        wasModded
-//                                        scheduledEvents
-                    return Pair.of(levelData, writable.freeze());
-                }
+                originLevel
         );
         return name;
     }
 
     private static void createSnapshotWorldAndSave(
             String worldName,
-            ClientLevel originLevel,
-            Function<LevelStorageSource.LevelStorageAccess, WorldStem.DataPackConfigSupplier> dataPackSettingsGetter,
-            Function<LevelStorageSource.LevelStorageAccess, WorldStem.WorldDataSupplier> function
+            ClientLevel originLevel
     ) {
         Minecraft minecraft = Minecraft.getInstance();
 
@@ -172,17 +94,89 @@ public class Screenshot3D {
 
         WorldStem worldStem;
         try {
-            worldStem = minecraft.makeWorldStem(
-                    packRepository,
+            ClientLevel.ClientLevelData originLevelData = originLevel.getLevelData();
+
+            LevelSettings levelSettings = new LevelSettings(
+                    worldName,
+                    GameType.CREATIVE,
                     false,
-                    dataPackSettingsGetter.apply(levelStorageAccess),
-                    function.apply(levelStorageAccess)
+                    originLevelData.getDifficulty(),
+                    true,
+                    originLevelData.getGameRules(),
+                    DataPackConfig.DEFAULT
+            );
+
+            RegistryAccess registryAccess = originLevel.registryAccess();
+
+            WritableRegistry<LevelStem> levelStems = new MappedRegistry<>(
+                    Registry.LEVEL_STEM_REGISTRY, Lifecycle.experimental(), null
+            );
+            levelStems.register(
+                    ResourceKey.create(Registry.LEVEL_STEM_REGISTRY, originLevel.dimension().location()),
+                    new LevelStem(
+                            originLevel.dimensionTypeRegistration(),
+                            new FlatLevelSource(
+                                    registryAccess.registryOrThrow(Registry.STRUCTURE_SET_REGISTRY),
+                                    new FlatLevelGeneratorSettings(Optional.empty(), registryAccess.registryOrThrow(Registry.BIOME_REGISTRY))
+                            )
+                    ),
+                    Lifecycle.stable()
+            );
+
+            WorldGenSettings worldGenSettings = new WorldGenSettings(
+                    0,
+                    false,
+                    false,
+                    WorldGenSettings.withOverworld(
+                            registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY),
+                            levelStems,
+                            new FlatLevelSource(
+                                    registryAccess.registryOrThrow(Registry.STRUCTURE_SET_REGISTRY),
+                                    new FlatLevelGeneratorSettings(Optional.empty(), registryAccess.registryOrThrow(Registry.BIOME_REGISTRY))
+                            )
+                    )
+            );
+            worldStem = ((WorldOpenFlowsAcc) minecraft.createWorldOpenFlows()).invokeLoadWorldStem(
+                    new WorldLoader.PackConfig(packRepository, levelSettings.getDataPackConfig(), false),
+                    (resourceManager, dataPackConfigx) -> {
+                        RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
+                        DynamicOps<JsonElement> dynamicOps = RegistryOps.create(JsonOps.INSTANCE, registryAccess);
+                        DynamicOps<JsonElement> dynamicOps2 = RegistryOps.createAndLoad(JsonOps.INSTANCE, writable, resourceManager);
+                        DataResult<WorldGenSettings> dataResult = WorldGenSettings.CODEC
+                                .encodeStart(dynamicOps, worldGenSettings)
+                                .setLifecycle(Lifecycle.stable())
+                                .flatMap(jsonElement -> WorldGenSettings.CODEC.parse(dynamicOps2, jsonElement));
+                        WorldGenSettings worldGenSettings2 = dataResult.getOrThrow(
+                                false, Util.prefix("Error reading worldgen settings after loading data packs: ", LOGGER::error)
+                        );
+                        var levelData = new PrimaryLevelData(levelSettings, worldGenSettings2, dataResult.lifecycle());
+//                    levelData.setSpawn(originLevel.getSharedSpawnPos(), originLevel.getSharedSpawnAngle());
+                        levelData.setSpawn(Minecraft.getInstance().player.blockPosition(), Minecraft.getInstance().player.yHeadRot);
+                        levelData.setDayTime(originLevelData.getDayTime());
+                        levelData.setGameTime(originLevelData.getGameTime());
+//                                        loadedPlayerTag
+//                                        levelData.setClearWeatherTime();
+                        levelData.setRaining(originLevelData.isRaining());
+//                                        levelData.setRainTime();
+                        levelData.setThundering(originLevelData.isThundering());
+//                                        levelData.setThunderTime();
+//                                        levelData.setInitialized();
+//                                        levelData.setWorldBorder();
+//                                        levelData.setEndDragonFightData();
+//                                        levelData.setCustomBossEvents();
+//                                        levelData.setWanderingTraderSpawnDelay();
+//                                        levelData.setWanderingTraderSpawnChance();
+//                                        levelData.setWanderingTraderId();
+//                                        knownServerBrands
+//                                        wasModded
+//                                        scheduledEvents
+                        return Pair.of(levelData, writable.freeze());
+                    }
             );
         } catch (Exception var21) {
             LOGGER.warn("Failed to load datapacks, can't proceed with server load", var21);
 
             try {
-                packRepository.close();
                 levelStorageAccess.close();
             } catch (IOException var17) {
                 LOGGER.warn("Failed to unlock access to level {}", worldName, var17);
@@ -196,7 +190,6 @@ public class Screenshot3D {
         try {
             RegistryAccess.Frozen iOException3 = worldStem.registryAccess();
             levelStorageAccess.saveDataTag(iOException3, exception);
-            worldStem.updateGlobals();
             var server = MinecraftServer.spin(
                     thread -> new SnapshotCreateServer(thread, minecraft, originLevel, levelStorageAccess, packRepository, worldStem)
             );

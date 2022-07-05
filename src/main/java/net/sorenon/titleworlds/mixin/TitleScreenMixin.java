@@ -33,7 +33,7 @@ public class TitleScreenMixin extends Screen {
             this.noLevels = false;
         } else {
             try {
-                this.noLevels = TitleWorldsMod.levelSource.getLevelList().isEmpty();
+                this.noLevels = TitleWorldsMod.levelSource.findLevelCandidates().isEmpty();
             } catch (LevelStorageException e) {
                 TitleWorldsMod.LOGGER.error(e);
             }
