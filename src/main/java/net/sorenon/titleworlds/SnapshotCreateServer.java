@@ -10,11 +10,13 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.Services;
 import net.minecraft.server.WorldStem;
 import net.minecraft.server.level.progress.LoggerChunkProgressListener;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.util.ModCheck;
+import net.minecraft.util.SignatureValidator;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
 
 public class SnapshotCreateServer extends MinecraftServer {
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Services NO_SERVICES = new Services(null, SignatureValidator.NO_VALIDATION, null, null);
 
     private final Minecraft minecraft;
     private final ClientLevel originLevel;
@@ -54,9 +57,7 @@ public class SnapshotCreateServer extends MinecraftServer {
                 worldStem,
                 Proxy.NO_PROXY,
                 minecraft.getFixerUpper(),
-                null,
-                null,
-                null,
+                NO_SERVICES,
                 LoggerChunkProgressListener::new
         );
         this.minecraft = minecraft;
@@ -190,7 +191,7 @@ public class SnapshotCreateServer extends MinecraftServer {
 
     @Override
     public void onServerCrash(CrashReport report) {
-        this.minecraft.delayCrash(() -> report);
+        this.minecraft.delayCrash(report);
     }
 
     @Override

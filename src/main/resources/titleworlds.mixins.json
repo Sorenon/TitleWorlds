@@ -17,6 +17,7 @@
     "accessor.PersistentEntitySectionManagerAcc",
     "accessor.ServerLevelAcc",
     "accessor.TransientEntitySectionManagerAcc",
+    "accessor.WorldOpenFlowsAcc",
     "cancel_save.ChunkMapMixin",
     "cancel_save.PersistentEntitySectionManagerMixin",
     "cancel_save.ServerChunkCacheMixin",
