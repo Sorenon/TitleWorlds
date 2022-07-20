@@ -40,10 +40,13 @@ import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.PrimaryLevelData;
 import net.minecraft.world.level.storage.WorldData;
 import net.sorenon.titleworlds.mixin.accessor.WorldOpenFlowsAcc;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -51,34 +54,69 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static net.sorenon.titleworlds.TitleWorldsMod.levelSource;
+import static net.sorenon.titleworlds.TitleWorldsMod.saveOnExitSource;
 
 public class Screenshot3D {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd+HH_mm_ss");
 
     public static String take3DScreenshot(ClientLevel originLevel, @Nullable String name) {
+
         if (name == null) {
             name = "3D_screenshot+" + DATE_FORMAT.format(new Date());
         }
+
 //        TODO Screenshot.grab();
 //        TODO FileUtil.findAvailableName
 
         createSnapshotWorldAndSave(
                 name,
-                originLevel
+                originLevel,
+                levelSource
         );
+
+        return name;
+
+    }
+
+    public static String take3DScreenshotOnExit(ClientLevel originLevel) {
+
+        saveOnExitSource.findLevelCandidates().forEach(levelDirectory -> {
+            Path levelPath = levelDirectory.path();
+            try {
+                FileUtils.deleteDirectory(levelPath.toFile());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        String name = "3D_screenshot+" + DATE_FORMAT.format(new Date());
+
+//        TODO Screenshot.grab();
+//        TODO FileUtil.findAvailableName
+
+        createSnapshotWorldAndSave(
+                name,
+                originLevel,
+                saveOnExitSource
+        );
+
         return name;
     }
 
+
     private static void createSnapshotWorldAndSave(
             String worldName,
-            ClientLevel originLevel
+            ClientLevel originLevel,
+            LevelStorageSource levelSourceLocation
+
     ) {
+
         Minecraft minecraft = Minecraft.getInstance();
 
         LevelStorageSource.LevelStorageAccess levelStorageAccess;
         try {
-            levelStorageAccess = levelSource.createAccess(worldName);
+            levelStorageAccess = levelSourceLocation.createAccess(worldName);
         } catch (IOException var22) {
             LOGGER.warn("Failed to read level {} data", worldName, var22);
             SystemToast.onWorldAccessFailure(minecraft, worldName);
@@ -202,4 +240,5 @@ public class Screenshot3D {
             throw new ReportedException(yggdrasilAuthenticationService);
         }
     }
+
 }

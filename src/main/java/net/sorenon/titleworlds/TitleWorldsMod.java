@@ -28,13 +28,22 @@ public class TitleWorldsMod implements ClientModInitializer {
     public static State state = new State();
 
     public static LevelStorageSource levelSource;
+    public static LevelStorageSource saveOnExitSource;
 
     @Override
     public void onInitializeClient() {
+
+        TWConfigUtil configutil = TWConfigUtil.getConfig();
+        configutil.onConfigChanged();
+        configutil.saveConfigFile();
+
         LOGGER.info("Opening level storage source");
         Minecraft minecraft = Minecraft.getInstance();
         Path titleWorldsPath = minecraft.gameDirectory.toPath().resolve("titleworlds");
+        Path exitOnSavePath = titleWorldsPath.resolve("latest");
+
         levelSource = new LevelStorageSource(titleWorldsPath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
+        saveOnExitSource = new LevelStorageSource(exitOnSavePath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
 
         keyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.titleworlds.opentitlescreen",

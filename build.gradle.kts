@@ -21,6 +21,18 @@ repositories {
         name = "Gegy"
         url = uri("https://maven.gegy.dev")
     }
+    maven {
+        name = "shedaniel"
+        url = uri("https://maven.shedaniel.me/")
+    }
+
+    maven {
+        name = "Modrinth"
+        url = uri("https://api.modrinth.com/maven")
+        content {
+            includeGroup("maven.modrinth");
+        }
+    }
 }
 
 dependencies {
@@ -33,6 +45,11 @@ dependencies {
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:${properties["fabric_version"].toString()}")
 
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:${properties["cloth_config_version"]}") {
+        exclude("net.fabricmc.fabric-api")
+    }
+
+    modCompileOnly("maven.modrinth:modmenu:${properties["modmenu_version"]}");
 
     include(implementation("com.electronwill.night-config:core:${properties["night_config_version"].toString()}")!!)
     include(implementation("com.electronwill.night-config:toml:${properties["night_config_version"].toString()}")!!)

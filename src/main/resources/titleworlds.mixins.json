@@ -24,7 +24,8 @@
     "cancel_save.needed.ChunkMapMixin",
     "cancel_save.needed.EntityStorageMixin",
     "cancel_save.needed.MinecraftServerMixin",
-    "cancel_save.needed.PlayerListMixin"
+    "cancel_save.needed.PlayerListMixin",
+    "PauseMenuMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -19,6 +19,9 @@
   "entrypoints": {
     "client": [
       "net.sorenon.titleworlds.TitleWorldsMod"
+    ],
+    "modmenu" :[
+      "net.sorenon.titleworlds.TWConfigModMenu"
     ]
   },
   "mixins": [
