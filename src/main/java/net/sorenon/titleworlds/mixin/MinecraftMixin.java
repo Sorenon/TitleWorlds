@@ -36,6 +36,7 @@ import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.DataPackConfig;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.storage.*;
+import net.sorenon.titleworlds.TWConfigGlobal;
 import net.sorenon.titleworlds.TitleWorldsMod;
 import net.sorenon.titleworlds.mixin.accessor.WorldOpenFlowsAcc;
 import org.apache.logging.log4j.LogManager;
@@ -206,12 +207,19 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     public boolean tryLoadTitleWorld() {
         try {
             var list = TitleWorldsMod.levelSource.findLevelCandidates().levels();
+
+            if (TWConfigGlobal.ScreenshotOnExit) {
+                list = TitleWorldsMod.saveOnExitSource.findLevelCandidates().levels();
+            }
+
             if (list.isEmpty()) {
                 LOGGER.info("TitleWorlds folder is empty");
                 return false;
             }
+
             this.loadTitleWorld(list.get(random.nextInt(list.size())).directoryName());
             return true;
+
         } catch (ExecutionException | InterruptedException | LevelStorageException e) {
             LOGGER.error("Exception when loading title world", e);
             return false;
@@ -332,6 +340,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         LevelStorageSource.LevelStorageAccess levelStorageAccess;
         try {
             levelStorageAccess = TitleWorldsMod.levelSource.createAccess(levelName);
+
+            if (TWConfigGlobal.ScreenshotOnExit)
+                levelStorageAccess = TitleWorldsMod.saveOnExitSource.createAccess(levelName);
+
         } catch (IOException var21) {
             throw new RuntimeException("Failed to read data");
         }
