@@ -49,7 +49,7 @@ dependencies {
         exclude("net.fabricmc.fabric-api")
     }
 
-    modCompileOnly("maven.modrinth:modmenu:${properties["modmenu_version"]}");
+    modCompileOnlyApi("maven.modrinth:modmenu:${properties["modmenu_version"]}");
 
     include(implementation("com.electronwill.night-config:core:${properties["night_config_version"].toString()}")!!)
     include(implementation("com.electronwill.night-config:toml:${properties["night_config_version"].toString()}")!!)

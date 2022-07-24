@@ -178,6 +178,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             TitleWorldsMod.LOGGER.info("Loading Title World");
             tryLoadTitleWorld();
         }
+
+        if (this.screen.getClass() == TitleScreen.class && TitleWorldsMod.state.reloading) {
+            tryLoadTitleWorld();
+        }
     }
 
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
@@ -206,6 +210,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Unique
     public boolean tryLoadTitleWorld() {
         try {
+
             var list = TitleWorldsMod.levelSource.findLevelCandidates().levels();
 
             if (TWConfigGlobal.ScreenshotOnExit) {
@@ -217,10 +222,13 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 return false;
             }
 
-            this.loadTitleWorld(list.get(random.nextInt(list.size())).directoryName());
+            int titleworldIndex = TWConfigGlobal.UseTitleWorldOverride ? TWConfigGlobal.TitleWorldOverride : random.nextInt(list.size());
+            this.loadTitleWorld(list.get(titleworldIndex).directoryName());
+
+
             return true;
 
-        } catch (ExecutionException | InterruptedException | LevelStorageException e) {
+        } catch (ExecutionException | InterruptedException | LevelStorageException | ArrayIndexOutOfBoundsException e) {
             LOGGER.error("Exception when loading title world", e);
             return false;
         }
@@ -330,6 +338,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         activeLoadingFuture = null;
 
         LOGGER.info("Logging into title world");
+        TitleWorldsMod.state.reloading = false;
     }
 
     @Unique
