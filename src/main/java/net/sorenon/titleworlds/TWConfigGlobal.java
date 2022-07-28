@@ -6,5 +6,7 @@ package net.sorenon.titleworlds;
 public class TWConfigGlobal {
 
     public static boolean ScreenshotOnExit = false;
+    public static boolean UseTitleWorldOverride = false;
+    public static int TitleWorldOverride = 0;
 
 }

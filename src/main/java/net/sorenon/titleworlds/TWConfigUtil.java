@@ -16,6 +16,8 @@ public class TWConfigUtil {
     // Config system borrowed from https://github.com/qouteall/ImmersivePortalsMod and adapted here thank you
 
     public boolean ScreenshotOnExit = false;
+    public boolean UseTitleWorldOverride = false;
+    public int TitleWorldOverride = 0;
 
     public static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -81,6 +83,8 @@ public class TWConfigUtil {
 
     public void onConfigChanged() {
         TWConfigGlobal.ScreenshotOnExit = ScreenshotOnExit;
+        TWConfigGlobal.TitleWorldOverride = TitleWorldOverride;
+        TWConfigGlobal.UseTitleWorldOverride = UseTitleWorldOverride;
     }
 
 }

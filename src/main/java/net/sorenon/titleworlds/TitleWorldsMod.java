@@ -74,8 +74,8 @@ public class TitleWorldsMod implements ClientModInitializer {
 
     public static class State {
         public boolean isTitleWorld = false;
-
         public boolean pause = false;
         public boolean noSave = true;
+        public boolean reloading = false;
     }
 }
