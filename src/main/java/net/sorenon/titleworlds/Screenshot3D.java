@@ -45,13 +45,11 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static net.sorenon.titleworlds.TitleWorldsMod.levelSource;
 import static net.sorenon.titleworlds.TitleWorldsMod.saveOnExitSource;

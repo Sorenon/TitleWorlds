@@ -41,7 +41,7 @@ import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.storage.LevelStorageException;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.WorldData;
-import net.sorenon.titleworlds.TWConfigGlobal;
+import net.sorenon.titleworlds.Timer;
 import net.sorenon.titleworlds.TitleWorldsMod;
 import net.sorenon.titleworlds.mixin.accessor.WorldOpenFlowsAcc;
 import org.apache.logging.log4j.LogManager;
@@ -58,7 +58,6 @@ import oshi.util.tuples.Triplet;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Proxy;
 import java.net.SocketAddress;
 import java.util.Optional;
 import java.util.Queue;
@@ -85,10 +84,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Final
     private AtomicReference<StoringChunkProgressListener> progressListener;
-
-    @Shadow
-    @Final
-    private Proxy proxy;
 
     @Shadow
     @Final
@@ -123,9 +118,14 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Final
     private YggdrasilAuthenticationService authenticationService;
+
     @Shadow
     @Final
     private ProfileKeyPairManager profileKeyPairManager;
+
+    @Shadow
+    public abstract void tick();
+
     @Unique
     private boolean closingLevel;
 
@@ -218,19 +218,15 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Unique
     public boolean tryLoadTitleWorld() {
         try {
-
             var list = TitleWorldsMod.levelSource.findLevelCandidates().levels();
-
-            if (TWConfigGlobal.ScreenshotOnExit) {
-                list = TitleWorldsMod.saveOnExitSource.findLevelCandidates().levels();
-            }
 
             if (list.isEmpty()) {
                 LOGGER.info("TitleWorlds folder is empty");
                 return false;
             }
 
-            int titleworldIndex = TWConfigGlobal.UseTitleWorldOverride ? TWConfigGlobal.TitleWorldOverride : random.nextInt(list.size());
+            var config = TitleWorldsMod.CONFIG;
+            int titleworldIndex = config.useTitleWorldOverride ? config.titleWorldOverride : random.nextInt(list.size());
             this.loadTitleWorld(list.get(titleworldIndex).directoryName());
 
 
@@ -265,12 +261,17 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Unique
     private void loadTitleWorld(String levelName
     ) throws ExecutionException, InterruptedException {
+        var timer = new Timer(false);
+
         LOGGER.info("Loading title world");
         TitleWorldsMod.state.isTitleWorld = true;
-        TitleWorldsMod.state.pause = false;
+
+        timer.start();
 
         var worldResourcesFuture
                 = CompletableFuture.supplyAsync(() -> openWorldResources(levelName, false));
+
+        timer.run("call openWorldResources", true);
 
         activeLoadingFuture = worldResourcesFuture;
         cleanup = () -> {
@@ -290,6 +291,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 return;
             }
         }
+
+        timer.run("wait openWorldResources");
 
         var worldResources = worldResourcesFuture.get();
         LevelStorageSource.LevelStorageAccess levelStorageAccess = worldResources.getA();
@@ -315,6 +318,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
 
+        timer.run("wait WorldStem");
+
         WorldStem worldStem = worldStemCompletableFuture.get();
 
         this.progressListener.set(null);
@@ -322,6 +327,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         LOGGER.info("Starting server");
         activeLoadingFuture = CompletableFuture.runAsync(() -> startSingleplayerServer(levelName, levelStorageAccess, worldStem, packRepository));
         cleanup = null;
+
+        timer.run("call startSingleplayerServer", true);
 
         while (singleplayerServer == null || !this.singleplayerServer.isReady()) {
             this.runAllTasks();
@@ -331,8 +338,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
 
+        timer.run("wait startSingleplayerServer");
+
         LOGGER.info("Joining singleplayer server");
         var joinServerFuture = CompletableFuture.runAsync(this::joinSingleplayerServer);
+        timer.run("call joinSingleplayerServer", true);
 
         activeLoadingFuture = joinServerFuture;
 
@@ -344,6 +354,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
         activeLoadingFuture = null;
+
+        timer.run("wait joinSingleplayerServer");
 
         LOGGER.info("Logging into title world");
         TitleWorldsMod.state.reloading = false;
@@ -358,7 +370,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         try {
             levelStorageAccess = TitleWorldsMod.levelSource.createAccess(levelName);
 
-            if (TWConfigGlobal.ScreenshotOnExit)
+            if (TitleWorldsMod.CONFIG.screenshotOnExit)
                 levelStorageAccess = TitleWorldsMod.saveOnExitSource.createAccess(levelName);
 
         } catch (IOException var21) {
