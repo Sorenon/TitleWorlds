@@ -9,7 +9,10 @@ import net.minecraft.ReportedException;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
-import net.minecraft.client.gui.screens.*;
+import net.minecraft.client.gui.screens.ProgressScreen;
+import net.minecraft.client.gui.screens.ReceivingLevelScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.main.GameConfig;
 import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -35,7 +38,9 @@ import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.DataPackConfig;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
-import net.minecraft.world.level.storage.*;
+import net.minecraft.world.level.storage.LevelStorageException;
+import net.minecraft.world.level.storage.LevelStorageSource;
+import net.minecraft.world.level.storage.WorldData;
 import net.sorenon.titleworlds.TWConfigGlobal;
 import net.sorenon.titleworlds.TitleWorldsMod;
 import net.sorenon.titleworlds.mixin.accessor.WorldOpenFlowsAcc;
@@ -55,6 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.SocketAddress;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -117,7 +123,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Final
     private YggdrasilAuthenticationService authenticationService;
-    @Shadow @Final private ProfileKeyPairManager profileKeyPairManager;
+    @Shadow
+    @Final
+    private ProfileKeyPairManager profileKeyPairManager;
     @Unique
     private boolean closingLevel;
 
@@ -435,6 +443,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
         //this.pendingConnection must be set before sending ServerboundHelloPacket or a rare crash can occur
         this.pendingConnection = pendingConnection;
-        pendingConnection.send(new ServerboundHelloPacket(this.getUser().getName(), this.profileKeyPairManager.profilePublicKeyData()));
+        pendingConnection.send(new ServerboundHelloPacket(this.getUser().getName(), this.profileKeyPairManager.profilePublicKeyData(), Optional.ofNullable(this.getUser().getProfileId())));
     }
 }

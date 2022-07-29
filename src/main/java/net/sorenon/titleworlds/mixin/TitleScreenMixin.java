@@ -1,6 +1,7 @@
 package net.sorenon.titleworlds.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.ImageButton;
@@ -31,23 +32,19 @@ public class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("HEAD"))
     void checkLevelStorage(CallbackInfo ci) {
-
-        this.addRenderableWidget(
-
-                new ImageButton(this.width / 2 + 104, (this.height / 4 + 48) + 72 + 12, 20, 20, 0, 0, 20,  new ResourceLocation("/textures/gui/reload.png"),  32, 64, (button -> {
-
-                    if (!TitleWorldsMod.state.reloading && TitleWorldsMod.state.isTitleWorld) {
-                        TitleWorldsMod.state.reloading = true;
-                        Minecraft.getInstance().clearLevel();
-                    }
-
-                }))
-
-        );
-
+        boolean modmenu = FabricLoader.getInstance().isModLoaded("modmenu");
 
         if (TitleWorldsMod.state.isTitleWorld) {
             this.noLevels = false;
+
+            this.addRenderableWidget(
+                    new ImageButton(this.width / 2 + 104, (this.height / 4 + 48) + 60 + (modmenu ? 24 : 0), 20, 20, 0, 0, 20, new ResourceLocation("titleworlds", "/textures/gui/reload.png"), 32, 64, (button -> {
+                        if (!TitleWorldsMod.state.reloading && TitleWorldsMod.state.isTitleWorld) {
+                            TitleWorldsMod.state.reloading = true;
+                            Minecraft.getInstance().clearLevel();
+                        }
+                    }))
+            );
         } else {
             try {
                 this.noLevels = TitleWorldsMod.levelSource.findLevelCandidates().isEmpty();
