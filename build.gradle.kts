@@ -1,5 +1,5 @@
 plugins {
-    id("fabric-loom") version "0.11-SNAPSHOT"
+    id("fabric-loom") version "0.12-SNAPSHOT"
     id("io.github.juuxel.loom-quiltflower") version "+"
     id("maven-publish")
     id("org.quiltmc.quilt-mappings-on-loom") version "4.0.0"
@@ -18,8 +18,12 @@ repositories {
         url = uri("https://ldtteam.jfrog.io/artifactory/parchmentmc-public/")
     }
     maven {
-        name = "Gegy"
-        url = uri("https://maven.gegy.dev")
+        name = "Modrinth"
+        url = uri("https://api.modrinth.com/maven")
+
+        content {
+            includeGroup("maven.modrinth")
+        }
     }
     maven {
         name = "shedaniel"
@@ -30,7 +34,7 @@ repositories {
         name = "Modrinth"
         url = uri("https://api.modrinth.com/maven")
         content {
-            includeGroup("maven.modrinth");
+            includeGroup("maven.modrinth")
         }
     }
 }
@@ -41,21 +45,25 @@ dependencies {
         this.addLayer(quiltMappings.mappings("org.quiltmc:quilt-mappings:${properties["minecraft_version"].toString()}+build.${properties["quilt_mappings"].toString()}:v2"))
         officialMojangMappings()
     })
-    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
 
+    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${properties["fabric_version"].toString()}")
 
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:${properties["cloth_config_version"]}") {
         exclude("net.fabricmc.fabric-api")
     }
 
-    modCompileOnlyApi("maven.modrinth:modmenu:${properties["modmenu_version"]}");
+    modCompileOnlyApi("maven.modrinth:modmenu:${properties["modmenu_version"]}")
+
+//    modCompileOnly("maven.modrinth:sodium:${properties["sodium_version"].toString()}")
 
     include(implementation("com.electronwill.night-config:core:${properties["night_config_version"].toString()}")!!)
     include(implementation("com.electronwill.night-config:toml:${properties["night_config_version"].toString()}")!!)
-//    modRuntimeOnly("supercoder79:databreaker:${properties["databreaker_version"].toString()}") {
-//        isTransitive = false
-//    }
+
+    modRuntimeOnly("maven.modrinth:lazydfu:0.1.3") {
+        exclude(module = "fabric-loader")
+        isTransitive = false
+    }
 }
 
 loom {
@@ -72,7 +80,7 @@ tasks {
     }
 
     withType<JavaCompile> {
-        options.release.set(16)
+        options.release.set(17)
     }
 
     jar {
@@ -83,8 +91,8 @@ tasks {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     withSourcesJar()
 }
 

@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class RealmsConnectThreadMixin {
 
     @Inject(method = "run", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/Connection;send(Lnet/minecraft/network/protocol/Packet;)V", ordinal = 1, shift = At.Shift.AFTER))
-    void clearLevel(CallbackInfo ci){
+    void clearLevel(CallbackInfo ci) {
         Minecraft.getInstance().execute(() -> Minecraft.getInstance().clearLevel(Minecraft.getInstance().screen));
     }
 }
