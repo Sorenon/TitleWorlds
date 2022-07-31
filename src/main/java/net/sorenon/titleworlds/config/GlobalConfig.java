@@ -9,6 +9,8 @@ import static net.sorenon.titleworlds.config.ConfigUtil.getConfigFileLocation;
 
 public class GlobalConfig {
 
+    public boolean enabled = true;
+
     public boolean screenshotOnExit = false;
 
     public boolean useTitleWorldOverride = false;

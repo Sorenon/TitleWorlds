@@ -185,9 +185,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         } else if (this.closingLevel && this.running) {
             TitleWorldsMod.LOGGER.info("Loading Title World");
             tryLoadTitleWorld();
-        }
-
-        if (this.screen.getClass() == TitleScreen.class && TitleWorldsMod.state.reloading) {
+        } else if (TitleWorldsMod.state.reloading) {
             tryLoadTitleWorld();
         }
     }
@@ -217,6 +215,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @SuppressWarnings("UnusedReturnValue")
     @Unique
     public boolean tryLoadTitleWorld() {
+        if (!TitleWorldsMod.CONFIG.enabled) {
+            return false;
+        }
+
         try {
             var list = TitleWorldsMod.LEVEL_SOURCE.findLevelCandidates().levels();
 

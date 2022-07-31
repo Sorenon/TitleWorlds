@@ -2,10 +2,9 @@ package net.sorenon.titleworlds.config;
 
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
-import me.shedaniel.clothconfig2.gui.entries.BooleanListEntry;
-import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.sorenon.titleworlds.TitleWorldsMod;
@@ -47,6 +46,11 @@ public class GlobalConfigGUI {
                 config.profiling
         ).setDefaultValue(false).build();
 
+        var enabled = configBuilder.entryBuilder().startBooleanToggle(
+                Component.translatable("titleworlds.config.enabled"),
+                config.enabled
+        ).setDefaultValue(true).build();
+
         var useTitleWorldOverride = configBuilder.entryBuilder().startBooleanToggle(
                         Component.translatable("titleworlds.config.usetitleworldoverride"),
                         config.useTitleWorldOverride
@@ -71,12 +75,13 @@ public class GlobalConfigGUI {
                 .setDefaultValue(1)
                 .build();
 
+        category.addEntry(enabled);
+        category.addEntry(reloadButton);
         category.addEntry(preloadRadius);
         category.addEntry(profiling);
         category.addEntry(screenshotOnExit);
         category.addEntry(useTitleWorldOverride);
         category.addEntry(titleWorldOverride);
-        category.addEntry(reloadButton);
 
         return configBuilder.setParentScreen(parent)
                 .setSavingRunnable(() -> {
@@ -87,8 +92,14 @@ public class GlobalConfigGUI {
                     newConfig.useTitleWorldOverride = useTitleWorldOverride.getValue();
                     newConfig.titleWorldOverride = Integer.parseInt(titleWorldOverride.getValue().split(" ")[0]);
                     newConfig.reloadButton = reloadButton.getValue();
+                    newConfig.enabled = enabled.getValue();
                     newConfig.save();
                     TitleWorldsMod.CONFIG = newConfig;
+
+                    if (config.enabled != newConfig.enabled) {
+                        TitleWorldsMod.state.reloading = true;
+                        Minecraft.getInstance().clearLevel();
+                    }
                 })
                 .build();
 
