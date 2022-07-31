@@ -37,6 +37,11 @@ public class GlobalConfigGUI {
                 config.screenshotOnExit
         ).setDefaultValue(false).build();
 
+        var reloadButton = configBuilder.entryBuilder().startBooleanToggle(
+                Component.translatable("titleworlds.config.reload_button"),
+                config.reloadButton
+        ).setDefaultValue(true).build();
+
         var profiling = configBuilder.entryBuilder().startBooleanToggle(
                 Component.translatable("titleworlds.config.profiling"),
                 config.profiling
@@ -71,6 +76,7 @@ public class GlobalConfigGUI {
         category.addEntry(screenshotOnExit);
         category.addEntry(useTitleWorldOverride);
         category.addEntry(titleWorldOverride);
+        category.addEntry(reloadButton);
 
         return configBuilder.setParentScreen(parent)
                 .setSavingRunnable(() -> {
@@ -80,6 +86,7 @@ public class GlobalConfigGUI {
                     newConfig.screenshotOnExit = !useTitleWorldOverride.getValue() && screenshotOnExit.getValue();
                     newConfig.useTitleWorldOverride = useTitleWorldOverride.getValue();
                     newConfig.titleWorldOverride = Integer.parseInt(titleWorldOverride.getValue().split(" ")[0]);
+                    newConfig.reloadButton = reloadButton.getValue();
                     newConfig.save();
                     TitleWorldsMod.CONFIG = newConfig;
                 })

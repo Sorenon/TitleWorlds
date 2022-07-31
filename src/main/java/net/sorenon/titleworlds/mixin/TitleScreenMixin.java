@@ -31,20 +31,25 @@ public class TitleScreenMixin extends Screen {
     private boolean noLevels;
 
     @Inject(method = "init", at = @At("HEAD"))
-    void checkLevelStorage(CallbackInfo ci) {
-        boolean modmenu = FabricLoader.getInstance().isModLoaded("modmenu");
+    void onInit(CallbackInfo ci) {
 
         if (TitleWorldsMod.state.isTitleWorld) {
             this.noLevels = false;
-
-            this.addRenderableWidget(
-                    new ImageButton(this.width / 2 + 104, (this.height / 4 + 48) + 60 + (modmenu ? 24 : 0), 20, 20, 0, 0, 20, new ResourceLocation("titleworlds", "/textures/gui/reload.png"), 32, 64, (button -> {
-                        if (!TitleWorldsMod.state.reloading && TitleWorldsMod.state.isTitleWorld) {
-                            TitleWorldsMod.state.reloading = true;
-                            Minecraft.getInstance().clearLevel();
-                        }
-                    }))
-            );
+            if (TitleWorldsMod.CONFIG.reloadButton) {
+                boolean modmenu = FabricLoader.getInstance().isModLoaded("modmenu");
+                this.addRenderableWidget(new ImageButton(
+                        this.width / 2 + 104,
+                        (this.height / 4 + 48) + 60 + (modmenu ? 24 : 0), 20,
+                        20, 0, 0, 20,
+                        new ResourceLocation("titleworlds", "/textures/gui/reload.png"),
+                        32, 64,
+                        (button -> {
+                            if (!TitleWorldsMod.state.reloading && TitleWorldsMod.state.isTitleWorld) {
+                                TitleWorldsMod.state.reloading = true;
+                                Minecraft.getInstance().clearLevel();
+                            }
+                        })));
+            }
         } else {
             try {
                 this.noLevels = TitleWorldsMod.LEVEL_SOURCE.findLevelCandidates().isEmpty();
