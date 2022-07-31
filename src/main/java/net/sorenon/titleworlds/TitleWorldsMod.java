@@ -25,7 +25,7 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.lit
 public class TitleWorldsMod implements ClientModInitializer {
     public static final Logger LOGGER = LogManager.getLogger("Title World");
 
-    private static KeyMapping keyBinding;
+    public static KeyMapping openTitleScreen;
 
     public static State state = new State();
 
@@ -46,14 +46,14 @@ public class TitleWorldsMod implements ClientModInitializer {
         LEVEL_SOURCE = new LevelStorageSource(titleWorldsPath, minecraft.gameDirectory.toPath().resolve("titleworlds"), minecraft.getFixerUpper());
         saveOnExitSource = new LevelStorageSource(exitOnSavePath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
 
-        keyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        openTitleScreen = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.titleworlds.opentitlescreen",
-                InputConstants.UNKNOWN.getValue(),
+                InputConstants.KEY_F9,
                 "category.titleworlds"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (keyBinding.isDown()) {
+            if (openTitleScreen.isDown()) {
                 client.setScreen(new TitleScreen());
             }
         });
