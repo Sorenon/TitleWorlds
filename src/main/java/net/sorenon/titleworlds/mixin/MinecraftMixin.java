@@ -218,7 +218,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Unique
     public boolean tryLoadTitleWorld() {
         try {
-            var list = TitleWorldsMod.levelSource.findLevelCandidates().levels();
+            var list = TitleWorldsMod.LEVEL_SOURCE.findLevelCandidates().levels();
 
             if (list.isEmpty()) {
                 LOGGER.info("TitleWorlds folder is empty");
@@ -265,6 +265,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
         LOGGER.info("Loading title world");
         TitleWorldsMod.state.isTitleWorld = true;
+        TitleWorldsMod.state.neededRadiusCenterInclusive = TitleWorldsMod.CONFIG.preloadChunksRadius;
 
         timer.start();
 
@@ -368,7 +369,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     ) {
         LevelStorageSource.LevelStorageAccess levelStorageAccess;
         try {
-            levelStorageAccess = TitleWorldsMod.levelSource.createAccess(levelName);
+            levelStorageAccess = TitleWorldsMod.LEVEL_SOURCE.createAccess(levelName);
 
             if (TitleWorldsMod.CONFIG.screenshotOnExit) {
                 levelStorageAccess = TitleWorldsMod.saveOnExitSource.createAccess(levelName);

@@ -1,4 +1,6 @@
 {
   "key.titleworlds.opentitlescreen": "Open Title Screen",
-  "category.titleworlds": "TitleWorlds"
+  "category.titleworlds": "TitleWorlds",
+  "titleworlds.config.screenshot_on_exit": "Screenshot on Exit",
+  "titleworlds.config.profiling": "Profiling"
 }

@@ -11,10 +11,8 @@ import net.minecraft.network.chat.Component;
 import net.sorenon.titleworlds.TitleWorldsMod;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-import static net.sorenon.titleworlds.TitleWorldsMod.levelSource;
+import static net.sorenon.titleworlds.TitleWorldsMod.LEVEL_SOURCE;
 
 @Environment(EnvType.CLIENT)
 public class GlobalConfigGUI {
@@ -26,37 +24,31 @@ public class GlobalConfigGUI {
         var config = ConfigUtil.loadConfig();
 
         ArrayList<String> worldList = new ArrayList<>();
-        Map<Integer, String> worldDict = new HashMap<>();
 
-        levelSource.findLevelCandidates().levels().forEach(levelDirectory -> {
-            worldDict.put(levelSource.findLevelCandidates().levels().indexOf(levelDirectory), levelDirectory.directoryName());
-        });
-
-        worldDict.forEach((integer, s) -> {
-            worldList.add(integer + " " + s);
-        });
+        for (var levelDirectory : LEVEL_SOURCE.findLevelCandidates()) {
+            worldList.add(levelDirectory.directoryName());
+        }
 
         ConfigBuilder configBuilder = ConfigBuilder.create();
-        ConfigCategory clientcategory = configBuilder.getOrCreateCategory(Component.translatable("Client Config"));
+        ConfigCategory category = configBuilder.getOrCreateCategory(Component.translatable("Client Config"));
 
-        BooleanListEntry screenshotOnExit = configBuilder.entryBuilder().startBooleanToggle(
+        var screenshotOnExit = configBuilder.entryBuilder().startBooleanToggle(
                 Component.translatable("titleworlds.config.screenshot_on_exit"),
                 config.screenshotOnExit
         ).setDefaultValue(false).build();
 
-        BooleanListEntry profiling = configBuilder.entryBuilder().startBooleanToggle(
+        var profiling = configBuilder.entryBuilder().startBooleanToggle(
                 Component.translatable("titleworlds.config.profiling"),
                 config.profiling
         ).setDefaultValue(false).build();
 
-
-        BooleanListEntry useTitleWorldOverride = configBuilder.entryBuilder().startBooleanToggle(
+        var useTitleWorldOverride = configBuilder.entryBuilder().startBooleanToggle(
                         Component.translatable("titleworlds.config.usetitleworldoverride"),
                         config.useTitleWorldOverride
                 ).setDefaultValue(false)
                 .build();
 
-        DropdownBoxEntry<String> titleWorldOverride = configBuilder.entryBuilder().startStringDropdownMenu(
+        var titleWorldOverride = configBuilder.entryBuilder().startStringDropdownMenu(
                         Component.translatable("titleworlds.config.titleworldoverride"),
                         Integer.toString(config.titleWorldOverride)
                 ).setDefaultValue("0")
@@ -64,14 +56,26 @@ public class GlobalConfigGUI {
                 .setSaveConsumer(item -> config.titleWorldOverride = Integer.parseInt(item.split(" ")[0]))
                 .build();
 
-        clientcategory.addEntry(screenshotOnExit);
-        clientcategory.addEntry(profiling);
-        clientcategory.addEntry(useTitleWorldOverride);
-        clientcategory.addEntry(titleWorldOverride);
+        var preloadRadius = configBuilder.entryBuilder().startIntSlider(Component.literal("poop"), config.preloadChunksRadius, 0, 11)
+                .setTooltip(Component.literal("Radius of world that will be pre loaded"),
+                        Component.literal("Bigger numbers are stabler but slower"),
+                        Component.literal("Recommended for pure speed: 0"),
+                        Component.literal("Recommended for balance: 1"),
+                        Component.literal("Recommended for stability: 4")
+                )
+                .setDefaultValue(1)
+                .build();
+
+        category.addEntry(preloadRadius);
+        category.addEntry(profiling);
+        category.addEntry(screenshotOnExit);
+        category.addEntry(useTitleWorldOverride);
+        category.addEntry(titleWorldOverride);
 
         return configBuilder.setParentScreen(parent)
                 .setSavingRunnable(() -> {
                     var newConfig = new GlobalConfig();
+                    newConfig.preloadChunksRadius = preloadRadius.getValue();
                     newConfig.profiling = profiling.getValue();
                     newConfig.screenshotOnExit = !useTitleWorldOverride.getValue() && screenshotOnExit.getValue();
                     newConfig.useTitleWorldOverride = useTitleWorldOverride.getValue();

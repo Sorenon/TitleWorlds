@@ -17,6 +17,8 @@ public class GlobalConfig {
 
     public boolean profiling = false;
 
+    public int preloadChunksRadius = 1;
+
     public String[] filteredTitleWorlds = new String[0];
 
     public GlobalConfig save() {

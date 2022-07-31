@@ -29,7 +29,7 @@ public class TitleWorldsMod implements ClientModInitializer {
 
     public static State state = new State();
 
-    public static LevelStorageSource levelSource;
+    public static LevelStorageSource LEVEL_SOURCE;
     public static LevelStorageSource saveOnExitSource;
 
     public static GlobalConfig CONFIG;
@@ -43,7 +43,7 @@ public class TitleWorldsMod implements ClientModInitializer {
         Path titleWorldsPath = minecraft.gameDirectory.toPath().resolve("titleworlds");
         Path exitOnSavePath = titleWorldsPath.resolve("latest");
 
-        levelSource = new LevelStorageSource(titleWorldsPath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
+        LEVEL_SOURCE = new LevelStorageSource(titleWorldsPath, minecraft.gameDirectory.toPath().resolve("titleworlds"), minecraft.getFixerUpper());
         saveOnExitSource = new LevelStorageSource(exitOnSavePath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
 
         keyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
