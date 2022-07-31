@@ -65,12 +65,12 @@ public class GlobalConfigGUI {
                 .setSaveConsumer(item -> config.titleWorldOverride = Integer.parseInt(item.split(" ")[0]))
                 .build();
 
-        var preloadRadius = configBuilder.entryBuilder().startIntSlider(Component.literal("poop"), config.preloadChunksRadius, 0, 11)
-                .setTooltip(Component.literal("Radius of world that will be pre loaded"),
-                        Component.literal("Bigger numbers are stabler but slower"),
-                        Component.literal("Recommended for pure speed: 0"),
-                        Component.literal("Recommended for balance: 1"),
-                        Component.literal("Recommended for stability: 4")
+        var preloadRadius = configBuilder.entryBuilder().startIntSlider(Component.translatable("titleworlds.config.preload_radius"), config.preloadChunksRadius, 0, 11)
+                .setTooltip(Component.translatable("titleworlds.config.preload_radius.tooltip1"),
+                        Component.translatable("titleworlds.config.preload_radius.tooltip2"),
+                        Component.translatable("titleworlds.config.preload_radius.tooltip3"),
+                        Component.translatable("titleworlds.config.preload_radius.tooltip4"),
+                        Component.translatable("titleworlds.config.preload_radius.tooltip5")
                 )
                 .setDefaultValue(1)
                 .build();
