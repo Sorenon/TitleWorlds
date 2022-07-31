@@ -9,11 +9,21 @@ import static net.sorenon.titleworlds.config.ConfigUtil.getConfigFileLocation;
 
 public class GlobalConfig {
 
+    public boolean enabled = true;
+
     public boolean screenshotOnExit = false;
 
     public boolean useTitleWorldOverride = false;
 
     public int titleWorldOverride = 0;
+
+    public boolean profiling = false;
+
+    public boolean reloadButton = true;
+
+    public int preloadChunksRadius = 1;
+
+    public String[] filteredTitleWorlds = new String[0];
 
     public GlobalConfig save() {
         File configFile = getConfigFileLocation();

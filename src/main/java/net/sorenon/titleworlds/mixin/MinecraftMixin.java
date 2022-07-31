@@ -178,16 +178,18 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
      */
     @Inject(method = "clearLevel(Lnet/minecraft/client/gui/screens/Screen;)V", at = @At("RETURN"))
     void postClearLevel(Screen screen, CallbackInfo ci) {
+        if (TitleWorldsMod.state.reloading) {
+            tryLoadTitleWorld();
+            TitleWorldsMod.state.reloading = false;
+            return;
+        }
+
         if (TitleWorldsMod.state.isTitleWorld) {
             TitleWorldsMod.LOGGER.info("Closing Title World");
             TitleWorldsMod.state.isTitleWorld = false;
             TitleWorldsMod.state.pause = false;
         } else if (this.closingLevel && this.running) {
             TitleWorldsMod.LOGGER.info("Loading Title World");
-            tryLoadTitleWorld();
-        }
-
-        if (this.screen.getClass() == TitleScreen.class && TitleWorldsMod.state.reloading) {
             tryLoadTitleWorld();
         }
     }
@@ -217,8 +219,12 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @SuppressWarnings("UnusedReturnValue")
     @Unique
     public boolean tryLoadTitleWorld() {
+        if (!TitleWorldsMod.CONFIG.enabled) {
+            return false;
+        }
+
         try {
-            var list = TitleWorldsMod.levelSource.findLevelCandidates().levels();
+            var list = TitleWorldsMod.LEVEL_SOURCE.findLevelCandidates().levels();
 
             if (list.isEmpty()) {
                 LOGGER.info("TitleWorlds folder is empty");
@@ -261,10 +267,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Unique
     private void loadTitleWorld(String levelName
     ) throws ExecutionException, InterruptedException {
-        var timer = new Timer(false);
+        var timer = new Timer(TitleWorldsMod.CONFIG.profiling);
 
         LOGGER.info("Loading title world");
         TitleWorldsMod.state.isTitleWorld = true;
+        TitleWorldsMod.state.neededRadiusCenterInclusive = TitleWorldsMod.CONFIG.preloadChunksRadius;
 
         timer.start();
 
@@ -368,11 +375,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     ) {
         LevelStorageSource.LevelStorageAccess levelStorageAccess;
         try {
-            levelStorageAccess = TitleWorldsMod.levelSource.createAccess(levelName);
+            levelStorageAccess = TitleWorldsMod.LEVEL_SOURCE.createAccess(levelName);
 
-            if (TitleWorldsMod.CONFIG.screenshotOnExit)
+            if (TitleWorldsMod.CONFIG.screenshotOnExit) {
                 levelStorageAccess = TitleWorldsMod.saveOnExitSource.createAccess(levelName);
-
+            }
         } catch (IOException var21) {
             throw new RuntimeException("Failed to read data");
         }

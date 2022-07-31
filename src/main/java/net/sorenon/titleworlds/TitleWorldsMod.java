@@ -9,8 +9,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.sorenon.titleworlds.config.ConfigUtil;
 import net.sorenon.titleworlds.config.GlobalConfig;
@@ -25,11 +24,11 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.lit
 public class TitleWorldsMod implements ClientModInitializer {
     public static final Logger LOGGER = LogManager.getLogger("Title World");
 
-    private static KeyMapping keyBinding;
+    public static KeyMapping openTitleScreen;
 
     public static State state = new State();
 
-    public static LevelStorageSource levelSource;
+    public static LevelStorageSource LEVEL_SOURCE;
     public static LevelStorageSource saveOnExitSource;
 
     public static GlobalConfig CONFIG;
@@ -43,17 +42,17 @@ public class TitleWorldsMod implements ClientModInitializer {
         Path titleWorldsPath = minecraft.gameDirectory.toPath().resolve("titleworlds");
         Path exitOnSavePath = titleWorldsPath.resolve("latest");
 
-        levelSource = new LevelStorageSource(titleWorldsPath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
+        LEVEL_SOURCE = new LevelStorageSource(titleWorldsPath, minecraft.gameDirectory.toPath().resolve("titleworlds"), minecraft.getFixerUpper());
         saveOnExitSource = new LevelStorageSource(exitOnSavePath, minecraft.gameDirectory.toPath().resolve("titleworldbackups"), minecraft.getFixerUpper());
 
-        keyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        openTitleScreen = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.titleworlds.opentitlescreen",
-                InputConstants.UNKNOWN.getValue(),
+                InputConstants.KEY_F9,
                 "category.titleworlds"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (keyBinding.isDown()) {
+            if (openTitleScreen.isDown()) {
                 client.setScreen(new TitleScreen());
             }
         });
@@ -62,12 +61,12 @@ public class TitleWorldsMod implements ClientModInitializer {
             dispatcher.register(literal("titleworlds:3Dscreenshot")
                     .executes(ctx -> {
                         String name = Screenshot3D.take3DScreenshot(ctx.getSource().getWorld(), null);
-                        ctx.getSource().sendFeedback(MutableComponent.create(new LiteralContents("Saved 3D screenshot as " + name)));
+                        ctx.getSource().sendFeedback(Component.translatable("titleworlds.message.saved_3d_screenshot", name));
                         return 1;
                     }).then(argument("name", StringArgumentType.string())
                             .executes(ctx -> {
                                 String name = Screenshot3D.take3DScreenshot(ctx.getSource().getWorld(), StringArgumentType.getString(ctx, "name"));
-                                ctx.getSource().sendFeedback(MutableComponent.create(new LiteralContents("Saved 3D screenshot as " + name)));
+                                ctx.getSource().sendFeedback(Component.translatable("titleworlds.message.saved_3d_screenshot", name));
                                 return 1;
                             })));
         });
@@ -80,7 +79,7 @@ public class TitleWorldsMod implements ClientModInitializer {
         public boolean pause = false;
         public boolean noSave = true;
         public boolean reloading = false;
-        public int neededRadiusCenterInclusive = 4;
+        public int neededRadiusCenterInclusive = 0;
     }
 
     /*

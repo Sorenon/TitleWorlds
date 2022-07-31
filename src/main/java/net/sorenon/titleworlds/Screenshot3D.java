@@ -51,7 +51,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
-import static net.sorenon.titleworlds.TitleWorldsMod.levelSource;
+import static net.sorenon.titleworlds.TitleWorldsMod.LEVEL_SOURCE;
 import static net.sorenon.titleworlds.TitleWorldsMod.saveOnExitSource;
 
 public class Screenshot3D {
@@ -70,7 +70,7 @@ public class Screenshot3D {
         createSnapshotWorldAndSave(
                 name,
                 originLevel,
-                levelSource
+                LEVEL_SOURCE
         );
 
         return name;
