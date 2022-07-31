@@ -80,7 +80,7 @@ public class TitleWorldsMod implements ClientModInitializer {
         public boolean pause = false;
         public boolean noSave = true;
         public boolean reloading = false;
-        public int neededRadiusCenterInclusive = 4;
+        public int neededRadiusCenterInclusive = 0;
     }
 
     /*

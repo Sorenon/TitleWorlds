@@ -40,17 +40,23 @@ public class GlobalConfigGUI {
         ConfigCategory clientcategory = configBuilder.getOrCreateCategory(Component.translatable("Client Config"));
 
         BooleanListEntry screenshotOnExit = configBuilder.entryBuilder().startBooleanToggle(
-                Component.translatable("titleworlds.config.screenshotonexit"),
+                Component.translatable("titleworlds.config.screenshot_on_exit"),
                 config.screenshotOnExit
         ).setDefaultValue(false).build();
 
-        BooleanListEntry UseTitleWorldOverride = configBuilder.entryBuilder().startBooleanToggle(
+        BooleanListEntry profiling = configBuilder.entryBuilder().startBooleanToggle(
+                Component.translatable("titleworlds.config.profiling"),
+                config.profiling
+        ).setDefaultValue(false).build();
+
+
+        BooleanListEntry useTitleWorldOverride = configBuilder.entryBuilder().startBooleanToggle(
                         Component.translatable("titleworlds.config.usetitleworldoverride"),
                         config.useTitleWorldOverride
                 ).setDefaultValue(false)
                 .build();
 
-        DropdownBoxEntry<String> TitleWorldOverride = configBuilder.entryBuilder().startStringDropdownMenu(
+        DropdownBoxEntry<String> titleWorldOverride = configBuilder.entryBuilder().startStringDropdownMenu(
                         Component.translatable("titleworlds.config.titleworldoverride"),
                         Integer.toString(config.titleWorldOverride)
                 ).setDefaultValue("0")
@@ -59,16 +65,17 @@ public class GlobalConfigGUI {
                 .build();
 
         clientcategory.addEntry(screenshotOnExit);
-        clientcategory.addEntry(UseTitleWorldOverride);
-        clientcategory.addEntry(TitleWorldOverride);
+        clientcategory.addEntry(profiling);
+        clientcategory.addEntry(useTitleWorldOverride);
+        clientcategory.addEntry(titleWorldOverride);
 
         return configBuilder.setParentScreen(parent)
                 .setSavingRunnable(() -> {
                     var newConfig = new GlobalConfig();
-                    // Prevents using a specific title world and using screenshot on exit at the same time.
-                    newConfig.screenshotOnExit = !UseTitleWorldOverride.getValue() && screenshotOnExit.getValue();
-                    newConfig.useTitleWorldOverride = UseTitleWorldOverride.getValue();
-                    newConfig.titleWorldOverride = Integer.parseInt(TitleWorldOverride.getValue().split(" ")[0]);
+                    newConfig.profiling = profiling.getValue();
+                    newConfig.screenshotOnExit = !useTitleWorldOverride.getValue() && screenshotOnExit.getValue();
+                    newConfig.useTitleWorldOverride = useTitleWorldOverride.getValue();
+                    newConfig.titleWorldOverride = Integer.parseInt(titleWorldOverride.getValue().split(" ")[0]);
                     newConfig.save();
                     TitleWorldsMod.CONFIG = newConfig;
                 })

@@ -1,6 +1,6 @@
 plugins {
     id("fabric-loom") version "0.12-SNAPSHOT"
-    id("io.github.juuxel.loom-quiltflower") version "+"
+//    id("io.github.juuxel.loom-quiltflower") version "1.7.1"
     id("maven-publish")
     id("org.quiltmc.quilt-mappings-on-loom") version "4.0.0"
 }

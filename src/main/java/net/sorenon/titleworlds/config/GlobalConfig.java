@@ -15,6 +15,10 @@ public class GlobalConfig {
 
     public int titleWorldOverride = 0;
 
+    public boolean profiling = false;
+
+    public String[] filteredTitleWorlds = new String[0];
+
     public GlobalConfig save() {
         File configFile = getConfigFileLocation();
 

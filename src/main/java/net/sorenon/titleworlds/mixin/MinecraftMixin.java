@@ -261,7 +261,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Unique
     private void loadTitleWorld(String levelName
     ) throws ExecutionException, InterruptedException {
-        var timer = new Timer(false);
+        var timer = new Timer(TitleWorldsMod.CONFIG.profiling);
 
         LOGGER.info("Loading title world");
         TitleWorldsMod.state.isTitleWorld = true;
@@ -370,9 +370,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         try {
             levelStorageAccess = TitleWorldsMod.levelSource.createAccess(levelName);
 
-            if (TitleWorldsMod.CONFIG.screenshotOnExit)
+            if (TitleWorldsMod.CONFIG.screenshotOnExit) {
                 levelStorageAccess = TitleWorldsMod.saveOnExitSource.createAccess(levelName);
-
+            }
         } catch (IOException var21) {
             throw new RuntimeException("Failed to read data");
         }
