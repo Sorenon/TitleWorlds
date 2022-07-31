@@ -178,14 +178,18 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
      */
     @Inject(method = "clearLevel(Lnet/minecraft/client/gui/screens/Screen;)V", at = @At("RETURN"))
     void postClearLevel(Screen screen, CallbackInfo ci) {
+        if (TitleWorldsMod.state.reloading) {
+            tryLoadTitleWorld();
+            TitleWorldsMod.state.reloading = false;
+            return;
+        }
+
         if (TitleWorldsMod.state.isTitleWorld) {
             TitleWorldsMod.LOGGER.info("Closing Title World");
             TitleWorldsMod.state.isTitleWorld = false;
             TitleWorldsMod.state.pause = false;
         } else if (this.closingLevel && this.running) {
             TitleWorldsMod.LOGGER.info("Loading Title World");
-            tryLoadTitleWorld();
-        } else if (TitleWorldsMod.state.reloading) {
             tryLoadTitleWorld();
         }
     }

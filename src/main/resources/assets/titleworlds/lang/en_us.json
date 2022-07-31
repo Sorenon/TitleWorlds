@@ -10,5 +10,6 @@
   "titleworlds.config.preload_radius.tooltip2": "Bigger numbers are stabler but slower",
   "titleworlds.config.preload_radius.tooltip3": "Recommended for pure speed: 0",
   "titleworlds.config.preload_radius.tooltip4": "Recommended for balance: 1",
-  "titleworlds.config.preload_radius.tooltip5": "Recommended for stability: 4"
+  "titleworlds.config.preload_radius.tooltip5": "Recommended for stability: 4",
+  "titleworlds.message.saved_3d_screenshot": "Saved 3D screenshot as %s"
 }
