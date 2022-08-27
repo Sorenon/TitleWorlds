@@ -14,11 +14,14 @@
   },
   "license": "MIT",
   "icon": "assets/titleworlds/icon.png",
-  "accessWidener" : "titleworlds.accesswidener",
+  "accessWidener": "titleworlds.accesswidener",
   "environment": "client",
   "entrypoints": {
     "client": [
       "net.sorenon.titleworlds.TitleWorldsMod"
+    ],
+    "modmenu": [
+      "net.sorenon.titleworlds.config.TitleWorldsModMenu"
     ]
   },
   "mixins": [

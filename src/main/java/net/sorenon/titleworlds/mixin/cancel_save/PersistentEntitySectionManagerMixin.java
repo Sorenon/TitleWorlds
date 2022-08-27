@@ -14,7 +14,7 @@ public class PersistentEntitySectionManagerMixin {
      * Prevent save on serverLevel.close() to optimize title world close time
      */
     @Inject(method = "saveAll", at = @At("HEAD"), cancellable = true)
-    void cancelSave(CallbackInfo ci){
+    void cancelSave(CallbackInfo ci) {
         if (TitleWorldsMod.state.isTitleWorld && TitleWorldsMod.state.noSave) {
             ci.cancel();
         }
