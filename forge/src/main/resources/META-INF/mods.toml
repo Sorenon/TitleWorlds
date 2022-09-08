@@ -1,0 +1,29 @@
+modLoader = "javafml"
+loaderVersion = "[43,)"
+#issueTrackerURL = ""
+license = "MIT"
+
+[[mods]]
+modId = "titleworlds"
+version = "${version}"
+displayName = "Title Worlds"
+authors = "Sorenon"
+description = '''
+Replaces the title screen cubemap with a real world.
+Primarily meant for use with MCXR but also works in pancake mode.
+'''
+#logoFile = ""
+
+[[dependencies.titleworlds]]
+modId = "forge"
+mandatory = true
+versionRange = "[43,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.titleworlds]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.19.2,)"
+ordering = "NONE"
+side = "BOTH"

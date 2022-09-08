@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.sorenon.titleworlds.forge.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "ClientModLoaderMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "titleworlds",
+  "version": "${version}",
+  "name": "Title Worlds",
+  "description": "Replaces the title screen cubemap with a real world.\nPrimarily meant for use with MCXR but also works in pancake mode.",
+  "authors": [
+    "Sorenon"
+  ],
+  "contact": {
+    "homepage": "https://github.com/Sorenon/TitleWorlds",
+    "sources": "https://github.com/Sorenon/TitleWorlds",
+    "issues": "https://github.com/Sorenon/TitleWorlds/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/titleworlds/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.sorenon.titleworlds.fabric.TitleWorldsModFabric"
+    ],
+    "modmenu": [
+      "net.sorenon.titleworlds.config.TitleWorldsModMenu"
+    ]
+  },
+  "mixins": [
+    "titleworlds-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.19.2"
+  }
+}
