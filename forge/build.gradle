@@ -2,15 +2,17 @@ plugins {
     id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
+architectury {
+    platformSetupLoomIde()
+    forge()
+}
+
 loom {
     accessWidenerPath = project(":common").loom.accessWidenerPath
 
     forge {
         convertAccessWideners = true
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
-
-        mixinConfig "titleworlds-common.mixins.json"
-        mixinConfig "titleworlds.mixins.json"
     }
 }
 
@@ -28,7 +30,7 @@ dependencies {
 //    modApi "dev.architectury:architectury-forge:${rootProject.architectury_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "namedElements")) { transitive = false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 }
 
 processResources {

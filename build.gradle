@@ -1,24 +1,25 @@
 plugins {
+    id "architectury-plugin" version "3.4-SNAPSHOT"
     id "dev.architectury.loom" version "0.12.0-SNAPSHOT" apply false
+}
+
+architectury {
+    minecraft = rootProject.minecraft_version
 }
 
 subprojects {
     apply plugin: "dev.architectury.loom"
-    if (project.path != ':common') {
 
-        loom {
-            runConfigs.configureEach { ideConfigGenerated = true }
-            mods {
-                main { // to match the default mod generated for Forge
-                    sourceSet project.sourceSets.main
-                    sourceSet project(':common').sourceSets.main
-                }
-            }
-        }
-    }
-}
+//    loom {
+//        runConfigs.configureEach { ideConfigGenerated = true }
+//        mods {
+//            main { // to match the default mod generated for Forge
+//                sourceSet project.sourceSets.main
+//                sourceSet project(':common').sourceSets.main
+//            }
+//        }
+//    }
 
-subprojects {
     loom {
         silentMojangMappingsLicense()
     }
@@ -37,6 +38,7 @@ subprojects {
 
 allprojects {
     apply plugin: "java"
+    apply plugin: "architectury-plugin"
     apply plugin: "maven-publish"
 
     archivesBaseName = rootProject.archives_base_name
